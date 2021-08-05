@@ -155,25 +155,10 @@ import org.apache.hadoop.hive.ql.metadata.NotNullConstraint;
 import org.apache.hadoop.hive.ql.metadata.PrimaryKeyInfo;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.metadata.VirtualColumn;
-import org.apache.hadoop.hive.ql.optimizer.calcite.CalciteSemanticException;
-import org.apache.hadoop.hive.ql.optimizer.calcite.CalciteSubquerySemanticException;
-import org.apache.hadoop.hive.ql.optimizer.calcite.CalciteViewSemanticException;
-import org.apache.hadoop.hive.ql.optimizer.calcite.HiveCalciteUtil;
-import org.apache.hadoop.hive.ql.optimizer.calcite.HiveConfPlannerContext;
-import org.apache.hadoop.hive.ql.optimizer.calcite.HiveDefaultRelMetadataProvider;
-import org.apache.hadoop.hive.ql.optimizer.calcite.HiveTezModelRelMetadataProvider;
+import org.apache.hadoop.hive.ql.optimizer.calcite.*;
 import org.apache.hadoop.hive.ql.optimizer.calcite.rules.HiveJoinSwapConstraintsRule;
 import org.apache.hadoop.hive.ql.optimizer.calcite.rules.HiveSemiJoinProjectTransposeRule;
 import org.apache.hadoop.hive.ql.optimizer.calcite.rules.views.HiveMaterializationRelMetadataProvider;
-import org.apache.hadoop.hive.ql.optimizer.calcite.HivePlannerContext;
-import org.apache.hadoop.hive.ql.optimizer.calcite.HiveRelDistribution;
-import org.apache.hadoop.hive.ql.optimizer.calcite.HiveRelFactories;
-import org.apache.hadoop.hive.ql.optimizer.calcite.HiveRelOptMaterializationValidator;
-import org.apache.hadoop.hive.ql.optimizer.calcite.HiveRelOptUtil;
-import org.apache.hadoop.hive.ql.optimizer.calcite.HiveRexExecutorImpl;
-import org.apache.hadoop.hive.ql.optimizer.calcite.HiveTypeSystemImpl;
-import org.apache.hadoop.hive.ql.optimizer.calcite.RelOptHiveTable;
-import org.apache.hadoop.hive.ql.optimizer.calcite.TraitsUtil;
 import org.apache.hadoop.hive.ql.optimizer.calcite.CalciteSemanticException.UnsupportedFeature;
 import org.apache.hadoop.hive.ql.optimizer.calcite.cost.HiveAlgorithmsConf;
 import org.apache.hadoop.hive.ql.optimizer.calcite.cost.HiveVolcanoPlanner;
@@ -2414,6 +2399,7 @@ public class CalcitePlanner extends SemanticAnalyzer {
       HepPlanner planner = new HepPlanner(program,
           basePlan.getCluster().getPlanner().getContext());
 
+      planner.addListener(new RuleEventLogger());
       List<RelMetadataProvider> list = Lists.newArrayList();
       list.add(mdProvider);
       planner.registerMetadataProviders(list);
