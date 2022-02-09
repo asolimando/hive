@@ -369,6 +369,11 @@ public class SetProcessor implements CommandProcessor {
       return new CommandProcessorResponse(getSchema(), null);
     }
 
+    if (nwcmd.equals("-d")) {
+      dumpOptions(HiveConf.getNonDefaultProperties(ss.getConf()));
+      return new CommandProcessorResponse(getSchema(), null);
+    }
+
     if (nwcmd.equals("-v")) {
       Properties properties = null;
       if (ss.getConf().getVar(HiveConf.ConfVars.HIVE_EXECUTION_ENGINE).equals("tez")) {

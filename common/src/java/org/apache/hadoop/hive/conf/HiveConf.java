@@ -6857,6 +6857,17 @@ public class HiveConf extends Configuration {
     return (ret);
   }
 
+  public static Properties getNonDefaultProperties(HiveConf conf) {
+    Properties ret = new Properties();
+    HiveConf defaultConf = new HiveConf();
+    for (Entry<String, String> entry : conf) {
+      if (!StringUtils.equals(entry.getValue(), defaultConf.get(entry.getKey()))) {
+        ret.setProperty(entry.getKey(), entry.getValue());
+      }
+    }
+    return ret;
+  }
+
   public String getJar() {
     return hiveJar;
   }
