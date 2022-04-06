@@ -232,6 +232,10 @@ sys	dbs			hive_test_user	USER	DELETE	true	-1	hive_test_user
 sys	dbs			hive_test_user	USER	INSERT	true	-1	hive_test_user
 sys	dbs			hive_test_user	USER	SELECT	true	-1	hive_test_user
 sys	dbs			hive_test_user	USER	UPDATE	true	-1	hive_test_user
+sys	func_ru			hive_test_user	USER	DELETE	true	-1	hive_test_user
+sys	func_ru			hive_test_user	USER	INSERT	true	-1	hive_test_user
+sys	func_ru			hive_test_user	USER	SELECT	true	-1	hive_test_user
+sys	func_ru			hive_test_user	USER	UPDATE	true	-1	hive_test_user
 sys	funcs			hive_test_user	USER	DELETE	true	-1	hive_test_user
 sys	funcs			hive_test_user	USER	INSERT	true	-1	hive_test_user
 sys	funcs			hive_test_user	USER	SELECT	true	-1	hive_test_user
@@ -477,6 +481,7 @@ PREHOOK: Output: sys@database_params
 PREHOOK: Output: sys@db_privs
 PREHOOK: Output: sys@db_version
 PREHOOK: Output: sys@dbs
+PREHOOK: Output: sys@func_ru
 PREHOOK: Output: sys@funcs
 PREHOOK: Output: sys@global_privs
 PREHOOK: Output: sys@hive_locks
@@ -539,6 +544,7 @@ POSTHOOK: Output: sys@database_params
 POSTHOOK: Output: sys@db_privs
 POSTHOOK: Output: sys@db_version
 POSTHOOK: Output: sys@dbs
+POSTHOOK: Output: sys@func_ru
 POSTHOOK: Output: sys@funcs
 POSTHOOK: Output: sys@global_privs
 POSTHOOK: Output: sys@hive_locks

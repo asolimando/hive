@@ -180,6 +180,10 @@ sys	dbs			hive_test_user	USER	DELETE	true	-1	hive_test_user
 sys	dbs			hive_test_user	USER	INSERT	true	-1	hive_test_user
 sys	dbs			hive_test_user	USER	SELECT	true	-1	hive_test_user
 sys	dbs			hive_test_user	USER	UPDATE	true	-1	hive_test_user
+sys	func_ru			hive_test_user	USER	DELETE	true	-1	hive_test_user
+sys	func_ru			hive_test_user	USER	INSERT	true	-1	hive_test_user
+sys	func_ru			hive_test_user	USER	SELECT	true	-1	hive_test_user
+sys	func_ru			hive_test_user	USER	UPDATE	true	-1	hive_test_user
 sys	funcs			hive_test_user	USER	DELETE	true	-1	hive_test_user
 sys	funcs			hive_test_user	USER	INSERT	true	-1	hive_test_user
 sys	funcs			hive_test_user	USER	SELECT	true	-1	hive_test_user
@@ -556,10 +560,18 @@ db_privs	principal_type
 db_version	schema_version
 db_version	ver_id
 db_version	version_comment
+dbs	dataconnector_name
 dbs	db_id
 dbs	db_location_uri
+dbs	db_managed_location_uri
 dbs	name
 #### A masked pattern was here ####
+dbs	remote_dbname
+dbs	type
+func_ru	func_id
+func_ru	integer_idx
+func_ru	resource_type
+func_ru	resource_uri
 funcs	class_name
 funcs	create_time
 funcs	db_id
@@ -628,12 +640,17 @@ moretypes	d
 moretypes	e
 moretypes	f
 moretypes	g
+mv_creation_metadata	cat_name
 mv_creation_metadata	db_name
+mv_creation_metadata	materialization_time
 mv_creation_metadata	mv_creation_metadata_id
 mv_creation_metadata	tbl_name
 mv_creation_metadata	txn_list
+mv_tables_used	deleted_count
+mv_tables_used	inserted_count
 mv_tables_used	mv_creation_metadata_id
 mv_tables_used	tbl_id
+mv_tables_used	updated_count
 notification_log	cat_name
 notification_log	db_name
 notification_log	event_id
@@ -666,6 +683,7 @@ part_col_privs	principal_type
 part_col_stats	avg_col_len
 part_col_stats	big_decimal_high_value
 part_col_stats	big_decimal_low_value
+part_col_stats	cat_name
 part_col_stats	column_name
 part_col_stats	column_type
 part_col_stats	cs_id
@@ -718,6 +736,7 @@ partitions	part_id
 partitions	part_name
 partitions	sd_id
 partitions	tbl_id
+partitions	write_id
 replication_metrics	dump_execution_id
 replication_metrics	metadata
 replication_metrics	policy_name
@@ -728,6 +747,7 @@ replication_metrics_orig	message_format
 replication_metrics_orig	metadata
 replication_metrics_orig	policy_name
 replication_metrics_orig	progress
+replication_metrics_orig	rm_start_time
 replication_metrics_orig	scheduled_execution_id
 role_map	add_time
 role_map	grant_option
@@ -804,8 +824,12 @@ sequence_table	sequence_name
 serde_params	param_key
 serde_params	param_value
 serde_params	serde_id
+serdes	description
+serdes	deserializer_class
 serdes	name
 serdes	serde_id
+serdes	serde_type
+serdes	serializer_class
 serdes	slib
 skewed_col_names	integer_idx
 skewed_col_names	sd_id
@@ -834,6 +858,7 @@ srcbucket	value
 tab_col_stats	avg_col_len
 tab_col_stats	big_decimal_high_value
 tab_col_stats	big_decimal_low_value
+tab_col_stats	cat_name
 tab_col_stats	column_name
 tab_col_stats	column_type
 tab_col_stats	cs_id
@@ -914,6 +939,7 @@ tbls	tbl_name
 tbls	tbl_type
 tbls	view_expanded_text
 tbls	view_original_text
+tbls	write_id
 transactions	agent_info
 transactions	heartbeat_count
 transactions	host
@@ -1228,7 +1254,7 @@ POSTHOOK: query: select count(*) from sds
 POSTHOOK: type: QUERY
 POSTHOOK: Input: sys@sds
 #### A masked pattern was here ####
-75
+76
 PREHOOK: query: select param_key, param_value from sd_params order by param_key, param_value limit 5
 PREHOOK: type: QUERY
 PREHOOK: Input: sys@sd_params
@@ -1451,6 +1477,7 @@ POSTHOOK: query: describe sys.tab_col_stats
 POSTHOOK: type: DESCTABLE
 POSTHOOK: Input: sys@tab_col_stats
 cs_id               	bigint              	from deserializer   
+cat_name            	string              	from deserializer   
 db_name             	string              	from deserializer   
 table_name          	string              	from deserializer   
 column_name         	string              	from deserializer   
@@ -1458,8 +1485,8 @@ column_type         	string              	from deserializer
 tbl_id              	bigint              	from deserializer   
 long_low_value      	bigint              	from deserializer   
 long_high_value     	bigint              	from deserializer   
-double_high_value   	double              	from deserializer   
 double_low_value    	double              	from deserializer   
+double_high_value   	double              	from deserializer   
 big_decimal_low_value	string              	from deserializer   
 big_decimal_high_value	string              	from deserializer   
 num_nulls           	bigint              	from deserializer   
@@ -1619,6 +1646,7 @@ default	sys	database_params	BASE_TABLE	NULL	NULL	NULL	NULL	NULL	YES	NO	NULL
 default	sys	db_privs	BASE_TABLE	NULL	NULL	NULL	NULL	NULL	YES	NO	NULL
 default	sys	db_version	BASE_TABLE	NULL	NULL	NULL	NULL	NULL	YES	NO	NULL
 default	sys	dbs	BASE_TABLE	NULL	NULL	NULL	NULL	NULL	YES	NO	NULL
+default	sys	func_ru	BASE_TABLE	NULL	NULL	NULL	NULL	NULL	YES	NO	NULL
 default	sys	funcs	BASE_TABLE	NULL	NULL	NULL	NULL	NULL	YES	NO	NULL
 default	sys	global_privs	BASE_TABLE	NULL	NULL	NULL	NULL	NULL	YES	NO	NULL
 default	sys	hive_locks	BASE_TABLE	NULL	NULL	NULL	NULL	NULL	YES	NO	NULL
