@@ -15,42 +15,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hive.ql.externalDB;
+package org.apache.hadoop.hive.ql.externaldb;
 
-public class Oracle extends AbstractExternalDB {
+public class MSSQLServer extends AbstractExternalDB {
+
   @Override
   public String getRootUser() {
-    return "SYS as SYSDBA";
+    return "sa";
   }
 
   @Override
   public String getRootPassword() {
-    return "oracle";
+    return "Its-a-s3cret";
   }
 
   @Override
   public String getJdbcUrl() {
-    return "jdbc:oracle:thin:@//" + getContainerHostAddress() + ":1521/xe";
+    return "jdbc:sqlserver://" + getContainerHostAddress() + ":1433";
   }
 
   @Override
   public String getJdbcDriver() {
-    return "oracle.jdbc.OracleDriver";
+    return "com.microsoft.sqlserver.jdbc.SQLServerDriver";
   }
 
   @Override
-  protected String getDockerImageName() {
-    return "pvargacl/oracle-xe-18.4.0";
+  public String getDockerImageName() {
+    return "mcr.microsoft.com/mssql/server:2019-latest";
   }
 
   @Override
-  protected String[] getDockerAdditionalArgs() {
-    return new String[] { "-p", "1521:1521", "-d" };
+  public String[] getDockerAdditionalArgs() {
+    return new String[] { "-p", "1433:1433", "-e", "ACCEPT_EULA=Y", "-e", "SA_PASSWORD=" + getRootPassword(), "-d" };
   }
 
   @Override
   public boolean isContainerReady(ProcessResults pr) {
-    return pr.stdout.contains("DATABASE IS READY TO USE!");
+    return pr.stdout
+        .contains("Recovery is complete. This is an informational message only. No user action is required.");
   }
-
 }

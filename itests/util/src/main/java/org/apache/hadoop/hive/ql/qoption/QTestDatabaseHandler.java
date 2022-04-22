@@ -18,12 +18,12 @@
 package org.apache.hadoop.hive.ql.qoption;
 
 import org.apache.hadoop.hive.ql.QTestUtil;
-import org.apache.hadoop.hive.ql.externalDB.AbstractExternalDB;
-import org.apache.hadoop.hive.ql.externalDB.MSSQLServer;
-import org.apache.hadoop.hive.ql.externalDB.MariaDB;
-import org.apache.hadoop.hive.ql.externalDB.MySQLExternalDB;
-import org.apache.hadoop.hive.ql.externalDB.Oracle;
-import org.apache.hadoop.hive.ql.externalDB.PostgresExternalDB;
+import org.apache.hadoop.hive.ql.externaldb.AbstractExternalDB;
+import org.apache.hadoop.hive.ql.externaldb.MSSQLServer;
+import org.apache.hadoop.hive.ql.externaldb.MariaDB;
+import org.apache.hadoop.hive.ql.externaldb.MySQLExternalDB;
+import org.apache.hadoop.hive.ql.externaldb.Oracle;
+import org.apache.hadoop.hive.ql.externaldb.PostgresExternalDB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

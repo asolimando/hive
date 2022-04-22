@@ -15,43 +15,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hive.ql.externalDB;
+package org.apache.hadoop.hive.ql.externaldb;
 
-public class MSSQLServer extends AbstractExternalDB {
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class MariaDB extends AbstractExternalDB {
 
   @Override
   public String getRootUser() {
-    return "sa";
-  }
-
-  @Override
-  public String getRootPassword() {
-    return "Its-a-s3cret";
+    return "root";
   }
 
   @Override
   public String getJdbcUrl() {
-    return "jdbc:sqlserver://" + getContainerHostAddress() + ":1433";
+    return "jdbc:mariadb://" + getContainerHostAddress() + ":3309/" + DB_NAME;
   }
-
-  @Override
+  
   public String getJdbcDriver() {
-    return "com.microsoft.sqlserver.jdbc.SQLServerDriver";
+    return "org.mariadb.jdbc.Driver";
   }
 
-  @Override
-  public String getDockerImageName() {
-    return "mcr.microsoft.com/mssql/server:2019-latest";
-  }
+  public String getDockerImageName() { return "mariadb:10.2"; }
 
-  @Override
   public String[] getDockerAdditionalArgs() {
-    return new String[] { "-p", "1433:1433", "-e", "ACCEPT_EULA=Y", "-e", "SA_PASSWORD=" + getRootPassword(), "-d" };
+    return new String[] {"-p", "3309:3306",
+        "-e", "MARIADB_ROOT_PASSWORD=" + getRootPassword(),
+        "-e", "MARIADB_DATABASE=" + DB_NAME,
+        "-d"
+    };
   }
 
-  @Override
   public boolean isContainerReady(ProcessResults pr) {
-    return pr.stdout
-        .contains("Recovery is complete. This is an informational message only. No user action is required.");
+    Pattern pat = Pattern.compile("ready for connections");
+    Matcher m = pat.matcher(pr.stderr);
+    return m.find() && m.find();
   }
 }

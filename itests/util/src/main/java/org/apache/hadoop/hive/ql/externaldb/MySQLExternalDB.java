@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hive.ql.externalDB;
+package org.apache.hadoop.hive.ql.externaldb;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,7 +35,7 @@ public class MySQLExternalDB extends AbstractExternalDB {
 
     @Override
     public String getJdbcUrl() {
-        return "jdbc:mysql://" + getContainerHostAddress() + ":3306/" + dbName;
+        return "jdbc:mysql://" + getContainerHostAddress() + ":3306/" + DB_NAME;
     }
 
     public String getJdbcDriver() {
@@ -47,7 +47,7 @@ public class MySQLExternalDB extends AbstractExternalDB {
     public String[] getDockerAdditionalArgs() {
         return new String[] {"-p", "3306:3306",
                           "-e", "MYSQL_ROOT_PASSWORD=" + getRootPassword(),
-                          "-e", "MYSQL_DATABASE=" + dbName,
+                          "-e", "MYSQL_DATABASE=" + DB_NAME,
                           "-d"
         };
     }

@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hive.ql.externalDB;
+package org.apache.hadoop.hive.ql.externaldb;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,8 +43,10 @@ import java.util.concurrent.TimeUnit;
 public abstract class AbstractExternalDB {
     protected static final Logger LOG = LoggerFactory.getLogger(AbstractExternalDB.class);
 
-    protected static final String dbName = "qtestDB";
+    protected static final String DB_NAME = "qtestDB";
 
+    private static final String QTESTPASSWORD = "qtestpassword";
+    private static final String QTESTUSER = "qtestuser";
     private static final int MAX_STARTUP_WAIT = 5 * 60 * 1000;
 
     protected static class ProcessResults {
@@ -59,7 +61,7 @@ public abstract class AbstractExternalDB {
         }
     }
 
-    private final String getDockerContainerName() {
+    private String getDockerContainerName() {
         return String.format("qtestExternalDB-%s", getClass().getSimpleName());
     }
 
@@ -72,7 +74,7 @@ public abstract class AbstractExternalDB {
         cmd.add(getDockerContainerName());
         cmd.addAll(Arrays.asList(getDockerAdditionalArgs()));
         cmd.add(getDockerImageName());
-        return cmd.toArray(new String[cmd.size()]);
+        return cmd.toArray(new String[0]);
     }
 
     private String[] buildRmCmd() {
@@ -83,10 +85,9 @@ public abstract class AbstractExternalDB {
         return new String[] { "docker", "logs", getDockerContainerName() };
     }
 
-
     private ProcessResults runCmd(String[] cmd, long secondsToWait)
             throws IOException, InterruptedException {
-        LOG.info("Going to run: " + String.join(" ", cmd));
+        LOG.info("Going to run: {}", String.join(" ", cmd));
         Process proc = Runtime.getRuntime().exec(cmd);
         if (!proc.waitFor(secondsToWait, TimeUnit.SECONDS)) {
             throw new RuntimeException(
@@ -99,18 +100,18 @@ public abstract class AbstractExternalDB {
         reader = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
         final StringBuilder errLines = new StringBuilder();
         reader.lines().forEach(s -> errLines.append(s).append('\n'));
-        LOG.info("Result size: " + lines.length() + ";" + errLines.length());
+        LOG.info("Result size: {};{}", lines.length(), errLines.length());
         return new ProcessResults(lines.toString(), errLines.toString(), proc.exitValue());
     }
 
+    @SuppressWarnings("SameParameterValue")
     private int runCmdAndPrintStreams(String[] cmd, long secondsToWait)
             throws InterruptedException, IOException {
         ProcessResults results = runCmd(cmd, secondsToWait);
-        LOG.info("Stdout from proc: " + results.stdout);
-        LOG.info("Stderr from proc: " + results.stderr);
+        LOG.info("Stdout from proc: {}", results.stdout);
+        LOG.info("Stderr from proc: {}", results.stderr);
         return results.rc;
     }
-
 
     public void launchDockerContainer() throws Exception {
         runCmdAndPrintStreams(buildRmCmd(), 600);
@@ -138,7 +139,6 @@ public abstract class AbstractExternalDB {
         }
     }
 
-
     protected final String getContainerHostAddress() {
         String hostAddress = System.getenv("HIVE_TEST_DOCKER_HOST");
         if (hostAddress != null) {
@@ -151,10 +151,10 @@ public abstract class AbstractExternalDB {
     /**
      * Return the name of the root user.
      *
-     * Override the method if the name of the root user must be different than the default.
+     * Override the method if the name of the root user must be different from the default.
      */
     protected String getRootUser() {
-        return "qtestuser";
+        return QTESTUSER;
     }
 
     /**
@@ -163,7 +163,7 @@ public abstract class AbstractExternalDB {
      * Override the method if the password must be different than the default.
      */
     protected String getRootPassword() {
-        return  "qtestpassword";
+        return QTESTPASSWORD;
     }
 
     protected abstract String getJdbcUrl();
@@ -176,14 +176,13 @@ public abstract class AbstractExternalDB {
 
     protected abstract boolean isContainerReady(ProcessResults pr);
 
-    private String[] SQLLineCmdBuild(String sqlScriptFile) {
+    private String[] sqlLineCmdBuild(String sqlScriptFile) {
         return new String[] {"-u", getJdbcUrl(),
                             "-d", getJdbcDriver(),
                             "-n", getRootUser(),
                             "-p", getRootPassword(),
                             "--isolation=TRANSACTION_READ_COMMITTED",
                             "-f", sqlScriptFile};
-
     }
 
     public void execute(String script) throws IOException, SQLException, ClassNotFoundException {
@@ -198,9 +197,11 @@ public abstract class AbstractExternalDB {
         sqlLine.setOutputStream(new PrintStream(out));
         sqlLine.setErrorStream(new PrintStream(out));
         System.setProperty("sqlline.silent", "true");
-        SqlLine.Status status = sqlLine.begin(SQLLineCmdBuild(script), null, false);
-        LOG.debug("Printing output from SQLLine:");
-        LOG.debug(out.toString());
+        SqlLine.Status status = sqlLine.begin(sqlLineCmdBuild(script), null, false);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Printing output from SQLLine:");
+            LOG.debug(out.toString());
+        }
         if (status != SqlLine.Status.OK) {
             throw new RuntimeException("Database script " + script + " failed with status " + status);
         }

@@ -15,40 +15,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hive.ql.externalDB;
+package org.apache.hadoop.hive.ql.externaldb;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-public class MariaDB extends AbstractExternalDB {
-
+public class Oracle extends AbstractExternalDB {
   @Override
   public String getRootUser() {
-    return "root";
+    return "SYS as SYSDBA";
+  }
+
+  @Override
+  public String getRootPassword() {
+    return "oracle";
   }
 
   @Override
   public String getJdbcUrl() {
-    return "jdbc:mariadb://" + getContainerHostAddress() + ":3309/" + dbName;
+    return "jdbc:oracle:thin:@//" + getContainerHostAddress() + ":1521/xe";
   }
-  
+
+  @Override
   public String getJdbcDriver() {
-    return "org.mariadb.jdbc.Driver";
+    return "oracle.jdbc.OracleDriver";
   }
 
-  public String getDockerImageName() { return "mariadb:10.2"; }
-
-  public String[] getDockerAdditionalArgs() {
-    return new String[] {"-p", "3309:3306",
-        "-e", "MARIADB_ROOT_PASSWORD=" + getRootPassword(),
-        "-e", "MARIADB_DATABASE=" + dbName,
-        "-d"
-    };
+  @Override
+  protected String getDockerImageName() {
+    return "pvargacl/oracle-xe-18.4.0";
   }
 
+  @Override
+  protected String[] getDockerAdditionalArgs() {
+    return new String[] { "-p", "1521:1521", "-d" };
+  }
+
+  @Override
   public boolean isContainerReady(ProcessResults pr) {
-    Pattern pat = Pattern.compile("ready for connections");
-    Matcher m = pat.matcher(pr.stderr);
-    return m.find() && m.find();
+    return pr.stdout.contains("DATABASE IS READY TO USE!");
   }
+
 }
