@@ -32,6 +32,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -83,6 +84,10 @@ public abstract class AbstractExternalDB {
 
     private String[] buildLogCmd() {
         return new String[] { "docker", "logs", getDockerContainerName() };
+    }
+
+    private String[] buildPortCmd() {
+        return new String[] { "docker", "port", getDockerContainerName() };
     }
 
     private ProcessResults runCmd(String[] cmd, long secondsToWait)
@@ -149,6 +154,30 @@ public abstract class AbstractExternalDB {
     }
 
     /**
+     * @return the container ports on the host machine, the order matches that of the "docker port" command.
+     * @throws IOException if an IO error occurs while reading the command stdout/stderr
+     * @throws InterruptedException if the command gets interrupted
+     */
+    protected final int[] getContainerHostPorts() throws IOException, InterruptedException {
+        final ProcessResults pr = runCmd(buildPortCmd(), 5);
+        if (pr.rc != 0) {
+            throw new RuntimeException(
+                "Something went wrong while retrieving container's ports: " + pr.stderr);
+        }
+
+        final List<Integer> res = new ArrayList<>();
+        try (Scanner scanner = new Scanner(pr.stdout)) {
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                int idx = line.lastIndexOf(':');
+                res.add(Integer.valueOf(line.substring(idx + 1)));
+            }
+        }
+
+        return res.stream().mapToInt(Integer::intValue).toArray();
+    }
+
+    /**
      * Return the name of the root user.
      *
      * Override the method if the name of the root user must be different from the default.
@@ -166,7 +195,7 @@ public abstract class AbstractExternalDB {
         return QTESTPASSWORD;
     }
 
-    protected abstract String getJdbcUrl();
+    protected abstract String getJdbcUrl() throws IOException, InterruptedException;
 
     protected abstract String getJdbcDriver();
 
@@ -176,7 +205,7 @@ public abstract class AbstractExternalDB {
 
     protected abstract boolean isContainerReady(ProcessResults pr);
 
-    private String[] sqlLineCmdBuild(String sqlScriptFile) {
+    private String[] sqlLineCmdBuild(String sqlScriptFile) throws IOException, InterruptedException {
         return new String[] {"-u", getJdbcUrl(),
                             "-d", getJdbcDriver(),
                             "-n", getRootUser(),
@@ -185,11 +214,12 @@ public abstract class AbstractExternalDB {
                             "-f", sqlScriptFile};
     }
 
-    public void execute(String script) throws IOException, SQLException, ClassNotFoundException {
+    public void execute(String script) throws IOException, SQLException, ClassNotFoundException, InterruptedException {
         // Test we can connect to database
         Class.forName(getJdbcDriver());
         try (Connection ignored = DriverManager.getConnection(getJdbcUrl(), getRootUser(), getRootPassword())) {
-            LOG.info("Successfully connected to {} with user {} and password {}", getJdbcUrl(), getRootUser(), getRootPassword());
+            LOG.info("Successfully connected to {} with user {} and password {}",
+                getJdbcUrl(), getRootUser(), getRootPassword());
         }
         LOG.info("Starting {} initialization", getClass().getSimpleName());
         SqlLine sqlLine = new SqlLine();

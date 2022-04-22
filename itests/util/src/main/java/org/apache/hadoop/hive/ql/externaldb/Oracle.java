@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.hive.ql.externaldb;
 
+import java.io.IOException;
+
 public class Oracle extends AbstractExternalDB {
   @Override
   public String getRootUser() {
@@ -29,8 +31,8 @@ public class Oracle extends AbstractExternalDB {
   }
 
   @Override
-  public String getJdbcUrl() {
-    return "jdbc:oracle:thin:@//" + getContainerHostAddress() + ":1521/xe";
+  public String getJdbcUrl() throws IOException, InterruptedException {
+    return "jdbc:oracle:thin:@//" + getContainerHostAddress() + ":" + getContainerHostPorts()[0] + "/xe";
   }
 
   @Override
@@ -45,7 +47,7 @@ public class Oracle extends AbstractExternalDB {
 
   @Override
   protected String[] getDockerAdditionalArgs() {
-    return new String[] { "-p", "1521:1521", "-d" };
+    return new String[] { "-P", "-d" };
   }
 
   @Override

@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hive.ql.externaldb;
 
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,8 +35,8 @@ public class MySQLExternalDB extends AbstractExternalDB {
     }
 
     @Override
-    public String getJdbcUrl() {
-        return "jdbc:mysql://" + getContainerHostAddress() + ":3306/" + DB_NAME;
+    public String getJdbcUrl() throws IOException, InterruptedException {
+        return "jdbc:mysql://" + getContainerHostAddress() + ":" + getContainerHostPorts()[0] + "/" + DB_NAME;
     }
 
     public String getJdbcDriver() {
@@ -45,7 +46,7 @@ public class MySQLExternalDB extends AbstractExternalDB {
     public String getDockerImageName() { return "mysql:5.7"; }
 
     public String[] getDockerAdditionalArgs() {
-        return new String[] {"-p", "3306:3306",
+        return new String[] {"-P",
                           "-e", "MYSQL_ROOT_PASSWORD=" + getRootPassword(),
                           "-e", "MYSQL_DATABASE=" + DB_NAME,
                           "-d"

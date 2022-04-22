@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hive.ql.externaldb;
 
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,8 +29,8 @@ public class MariaDB extends AbstractExternalDB {
   }
 
   @Override
-  public String getJdbcUrl() {
-    return "jdbc:mariadb://" + getContainerHostAddress() + ":3309/" + DB_NAME;
+  public String getJdbcUrl() throws IOException, InterruptedException {
+    return "jdbc:mariadb://" + getContainerHostAddress() + ":" + getContainerHostPorts()[0] + "/" + DB_NAME;
   }
   
   public String getJdbcDriver() {
@@ -39,7 +40,7 @@ public class MariaDB extends AbstractExternalDB {
   public String getDockerImageName() { return "mariadb:10.2"; }
 
   public String[] getDockerAdditionalArgs() {
-    return new String[] {"-p", "3309:3306",
+    return new String[] {"-P",
         "-e", "MARIADB_ROOT_PASSWORD=" + getRootPassword(),
         "-e", "MARIADB_DATABASE=" + DB_NAME,
         "-d"

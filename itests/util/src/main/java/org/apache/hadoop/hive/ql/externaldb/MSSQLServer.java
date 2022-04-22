@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.hive.ql.externaldb;
 
+import java.io.IOException;
+
 public class MSSQLServer extends AbstractExternalDB {
 
   @Override
@@ -30,8 +32,8 @@ public class MSSQLServer extends AbstractExternalDB {
   }
 
   @Override
-  public String getJdbcUrl() {
-    return "jdbc:sqlserver://" + getContainerHostAddress() + ":1433";
+  public String getJdbcUrl() throws IOException, InterruptedException {
+    return "jdbc:sqlserver://" + getContainerHostAddress() + ":" + getContainerHostPorts()[0];
   }
 
   @Override
@@ -46,7 +48,7 @@ public class MSSQLServer extends AbstractExternalDB {
 
   @Override
   public String[] getDockerAdditionalArgs() {
-    return new String[] { "-p", "1433:1433", "-e", "ACCEPT_EULA=Y", "-e", "SA_PASSWORD=" + getRootPassword(), "-d" };
+    return new String[] { "-P", "-e", "ACCEPT_EULA=Y", "-e", "SA_PASSWORD=" + getRootPassword(), "-d" };
   }
 
   @Override
