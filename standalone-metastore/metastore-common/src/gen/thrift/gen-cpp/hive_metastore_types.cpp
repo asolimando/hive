@@ -10351,6 +10351,10 @@ void ColumnStatisticsObj::__set_colType(const std::string& val) {
 void ColumnStatisticsObj::__set_statsData(const ColumnStatisticsData& val) {
   this->statsData = val;
 }
+
+void ColumnStatisticsObj::__set_statistics(const std::string& val) {
+  this->statistics = val;
+}
 std::ostream& operator<<(std::ostream& out, const ColumnStatisticsObj& obj)
 {
   obj.printTo(out);
@@ -10373,6 +10377,7 @@ uint32_t ColumnStatisticsObj::read(::apache::thrift::protocol::TProtocol* iprot)
   bool isset_colName = false;
   bool isset_colType = false;
   bool isset_statsData = false;
+  bool isset_statistics = false;
 
   while (true)
   {
@@ -10406,6 +10411,14 @@ uint32_t ColumnStatisticsObj::read(::apache::thrift::protocol::TProtocol* iprot)
           xfer += iprot->skip(ftype);
         }
         break;
+      case 4:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->statistics);
+          isset_statistics = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -10420,6 +10433,8 @@ uint32_t ColumnStatisticsObj::read(::apache::thrift::protocol::TProtocol* iprot)
   if (!isset_colType)
     throw TProtocolException(TProtocolException::INVALID_DATA);
   if (!isset_statsData)
+    throw TProtocolException(TProtocolException::INVALID_DATA);
+  if (!isset_statistics)
     throw TProtocolException(TProtocolException::INVALID_DATA);
   return xfer;
 }
@@ -10441,6 +10456,10 @@ uint32_t ColumnStatisticsObj::write(::apache::thrift::protocol::TProtocol* oprot
   xfer += this->statsData.write(oprot);
   xfer += oprot->writeFieldEnd();
 
+  xfer += oprot->writeFieldBegin("statistics", ::apache::thrift::protocol::T_STRING, 4);
+  xfer += oprot->writeString(this->statistics);
+  xfer += oprot->writeFieldEnd();
+
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -10451,17 +10470,20 @@ void swap(ColumnStatisticsObj &a, ColumnStatisticsObj &b) {
   swap(a.colName, b.colName);
   swap(a.colType, b.colType);
   swap(a.statsData, b.statsData);
+  swap(a.statistics, b.statistics);
 }
 
 ColumnStatisticsObj::ColumnStatisticsObj(const ColumnStatisticsObj& other334) {
   colName = other334.colName;
   colType = other334.colType;
   statsData = other334.statsData;
+  statistics = other334.statistics;
 }
 ColumnStatisticsObj& ColumnStatisticsObj::operator=(const ColumnStatisticsObj& other335) {
   colName = other335.colName;
   colType = other335.colType;
   statsData = other335.statsData;
+  statistics = other335.statistics;
   return *this;
 }
 void ColumnStatisticsObj::printTo(std::ostream& out) const {
@@ -10470,6 +10492,7 @@ void ColumnStatisticsObj::printTo(std::ostream& out) const {
   out << "colName=" << to_string(colName);
   out << ", " << "colType=" << to_string(colType);
   out << ", " << "statsData=" << to_string(statsData);
+  out << ", " << "statistics=" << to_string(statistics);
   out << ")";
 }
 

@@ -14,6 +14,7 @@ package org.apache.hadoop.hive.metastore.api;
   private static final org.apache.thrift.protocol.TField COL_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("colName", org.apache.thrift.protocol.TType.STRING, (short)1);
   private static final org.apache.thrift.protocol.TField COL_TYPE_FIELD_DESC = new org.apache.thrift.protocol.TField("colType", org.apache.thrift.protocol.TType.STRING, (short)2);
   private static final org.apache.thrift.protocol.TField STATS_DATA_FIELD_DESC = new org.apache.thrift.protocol.TField("statsData", org.apache.thrift.protocol.TType.STRUCT, (short)3);
+  private static final org.apache.thrift.protocol.TField STATISTICS_FIELD_DESC = new org.apache.thrift.protocol.TField("statistics", org.apache.thrift.protocol.TType.STRING, (short)4);
 
   private static final org.apache.thrift.scheme.SchemeFactory STANDARD_SCHEME_FACTORY = new ColumnStatisticsObjStandardSchemeFactory();
   private static final org.apache.thrift.scheme.SchemeFactory TUPLE_SCHEME_FACTORY = new ColumnStatisticsObjTupleSchemeFactory();
@@ -21,12 +22,14 @@ package org.apache.hadoop.hive.metastore.api;
   private @org.apache.thrift.annotation.Nullable java.lang.String colName; // required
   private @org.apache.thrift.annotation.Nullable java.lang.String colType; // required
   private @org.apache.thrift.annotation.Nullable ColumnStatisticsData statsData; // required
+  private @org.apache.thrift.annotation.Nullable java.lang.String statistics; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     COL_NAME((short)1, "colName"),
     COL_TYPE((short)2, "colType"),
-    STATS_DATA((short)3, "statsData");
+    STATS_DATA((short)3, "statsData"),
+    STATISTICS((short)4, "statistics");
 
     private static final java.util.Map<java.lang.String, _Fields> byName = new java.util.HashMap<java.lang.String, _Fields>();
 
@@ -48,6 +51,8 @@ package org.apache.hadoop.hive.metastore.api;
           return COL_TYPE;
         case 3: // STATS_DATA
           return STATS_DATA;
+        case 4: // STATISTICS
+          return STATISTICS;
         default:
           return null;
       }
@@ -98,6 +103,8 @@ package org.apache.hadoop.hive.metastore.api;
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.STATS_DATA, new org.apache.thrift.meta_data.FieldMetaData("statsData", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ColumnStatisticsData.class)));
+    tmpMap.put(_Fields.STATISTICS, new org.apache.thrift.meta_data.FieldMetaData("statistics", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = java.util.Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ColumnStatisticsObj.class, metaDataMap);
   }
@@ -108,12 +115,14 @@ package org.apache.hadoop.hive.metastore.api;
   public ColumnStatisticsObj(
     java.lang.String colName,
     java.lang.String colType,
-    ColumnStatisticsData statsData)
+    ColumnStatisticsData statsData,
+    java.lang.String statistics)
   {
     this();
     this.colName = org.apache.hadoop.hive.metastore.utils.StringUtils.intern(colName);
     this.colType = org.apache.hadoop.hive.metastore.utils.StringUtils.intern(colType);
     this.statsData = statsData;
+    this.statistics = statistics;
   }
 
   /**
@@ -129,6 +138,9 @@ package org.apache.hadoop.hive.metastore.api;
     if (other.isSetStatsData()) {
       this.statsData = new ColumnStatisticsData(other.statsData);
     }
+    if (other.isSetStatistics()) {
+      this.statistics = other.statistics;
+    }
   }
 
   public ColumnStatisticsObj deepCopy() {
@@ -140,6 +152,7 @@ package org.apache.hadoop.hive.metastore.api;
     this.colName = null;
     this.colType = null;
     this.statsData = null;
+    this.statistics = null;
   }
 
   @org.apache.thrift.annotation.Nullable
@@ -214,6 +227,30 @@ package org.apache.hadoop.hive.metastore.api;
     }
   }
 
+  @org.apache.thrift.annotation.Nullable
+  public java.lang.String getStatistics() {
+    return this.statistics;
+  }
+
+  public void setStatistics(@org.apache.thrift.annotation.Nullable java.lang.String statistics) {
+    this.statistics = statistics;
+  }
+
+  public void unsetStatistics() {
+    this.statistics = null;
+  }
+
+  /** Returns true if field statistics is set (has been assigned a value) and false otherwise */
+  public boolean isSetStatistics() {
+    return this.statistics != null;
+  }
+
+  public void setStatisticsIsSet(boolean value) {
+    if (!value) {
+      this.statistics = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, @org.apache.thrift.annotation.Nullable java.lang.Object value) {
     switch (field) {
     case COL_NAME:
@@ -240,6 +277,14 @@ package org.apache.hadoop.hive.metastore.api;
       }
       break;
 
+    case STATISTICS:
+      if (value == null) {
+        unsetStatistics();
+      } else {
+        setStatistics((java.lang.String)value);
+      }
+      break;
+
     }
   }
 
@@ -254,6 +299,9 @@ package org.apache.hadoop.hive.metastore.api;
 
     case STATS_DATA:
       return getStatsData();
+
+    case STATISTICS:
+      return getStatistics();
 
     }
     throw new java.lang.IllegalStateException();
@@ -272,6 +320,8 @@ package org.apache.hadoop.hive.metastore.api;
       return isSetColType();
     case STATS_DATA:
       return isSetStatsData();
+    case STATISTICS:
+      return isSetStatistics();
     }
     throw new java.lang.IllegalStateException();
   }
@@ -316,6 +366,15 @@ package org.apache.hadoop.hive.metastore.api;
         return false;
     }
 
+    boolean this_present_statistics = true && this.isSetStatistics();
+    boolean that_present_statistics = true && that.isSetStatistics();
+    if (this_present_statistics || that_present_statistics) {
+      if (!(this_present_statistics && that_present_statistics))
+        return false;
+      if (!this.statistics.equals(that.statistics))
+        return false;
+    }
+
     return true;
   }
 
@@ -334,6 +393,10 @@ package org.apache.hadoop.hive.metastore.api;
     hashCode = hashCode * 8191 + ((isSetStatsData()) ? 131071 : 524287);
     if (isSetStatsData())
       hashCode = hashCode * 8191 + statsData.hashCode();
+
+    hashCode = hashCode * 8191 + ((isSetStatistics()) ? 131071 : 524287);
+    if (isSetStatistics())
+      hashCode = hashCode * 8191 + statistics.hashCode();
 
     return hashCode;
   }
@@ -372,6 +435,16 @@ package org.apache.hadoop.hive.metastore.api;
     }
     if (isSetStatsData()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.statsData, other.statsData);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = java.lang.Boolean.compare(isSetStatistics(), other.isSetStatistics());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetStatistics()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.statistics, other.statistics);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -420,6 +493,14 @@ package org.apache.hadoop.hive.metastore.api;
       sb.append(this.statsData);
     }
     first = false;
+    if (!first) sb.append(", ");
+    sb.append("statistics:");
+    if (this.statistics == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.statistics);
+    }
+    first = false;
     sb.append(")");
     return sb.toString();
   }
@@ -436,6 +517,10 @@ package org.apache.hadoop.hive.metastore.api;
 
     if (!isSetStatsData()) {
       throw new org.apache.thrift.protocol.TProtocolException("Required field 'statsData' is unset! Struct:" + toString());
+    }
+
+    if (!isSetStatistics()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'statistics' is unset! Struct:" + toString());
     }
 
     // check for sub-struct validity
@@ -500,6 +585,14 @@ package org.apache.hadoop.hive.metastore.api;
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 4: // STATISTICS
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.statistics = iprot.readString();
+              struct.setStatisticsIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -528,6 +621,11 @@ package org.apache.hadoop.hive.metastore.api;
         struct.statsData.write(oprot);
         oprot.writeFieldEnd();
       }
+      if (struct.statistics != null) {
+        oprot.writeFieldBegin(STATISTICS_FIELD_DESC);
+        oprot.writeString(struct.statistics);
+        oprot.writeFieldEnd();
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -548,6 +646,7 @@ package org.apache.hadoop.hive.metastore.api;
       oprot.writeString(struct.colName);
       oprot.writeString(struct.colType);
       struct.statsData.write(oprot);
+      oprot.writeString(struct.statistics);
     }
 
     @Override
@@ -560,6 +659,8 @@ package org.apache.hadoop.hive.metastore.api;
       struct.statsData = new ColumnStatisticsData();
       struct.statsData.read(iprot);
       struct.setStatsDataIsSet(true);
+      struct.statistics = iprot.readString();
+      struct.setStatisticsIsSet(true);
     }
   }
 

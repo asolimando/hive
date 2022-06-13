@@ -37,6 +37,11 @@ class ColumnStatisticsObj
             'type' => TType::STRUCT,
             'class' => '\metastore\ColumnStatisticsData',
         ),
+        4 => array(
+            'var' => 'statistics',
+            'isRequired' => true,
+            'type' => TType::STRING,
+        ),
     );
 
     /**
@@ -51,6 +56,10 @@ class ColumnStatisticsObj
      * @var \metastore\ColumnStatisticsData
      */
     public $statsData = null;
+    /**
+     * @var string
+     */
+    public $statistics = null;
 
     public function __construct($vals = null)
     {
@@ -63,6 +72,9 @@ class ColumnStatisticsObj
             }
             if (isset($vals['statsData'])) {
                 $this->statsData = $vals['statsData'];
+            }
+            if (isset($vals['statistics'])) {
+                $this->statistics = $vals['statistics'];
             }
         }
     }
@@ -108,6 +120,13 @@ class ColumnStatisticsObj
                         $xfer += $input->skip($ftype);
                     }
                     break;
+                case 4:
+                    if ($ftype == TType::STRING) {
+                        $xfer += $input->readString($this->statistics);
+                    } else {
+                        $xfer += $input->skip($ftype);
+                    }
+                    break;
                 default:
                     $xfer += $input->skip($ftype);
                     break;
@@ -138,6 +157,11 @@ class ColumnStatisticsObj
             }
             $xfer += $output->writeFieldBegin('statsData', TType::STRUCT, 3);
             $xfer += $this->statsData->write($output);
+            $xfer += $output->writeFieldEnd();
+        }
+        if ($this->statistics !== null) {
+            $xfer += $output->writeFieldBegin('statistics', TType::STRING, 4);
+            $xfer += $output->writeString($this->statistics);
             $xfer += $output->writeFieldEnd();
         }
         $xfer += $output->writeFieldStop();

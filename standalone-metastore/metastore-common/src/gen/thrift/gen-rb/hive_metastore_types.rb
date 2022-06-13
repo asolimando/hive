@@ -2195,11 +2195,13 @@ class ColumnStatisticsObj
   COLNAME = 1
   COLTYPE = 2
   STATSDATA = 3
+  STATISTICS = 4
 
   FIELDS = {
     COLNAME => {:type => ::Thrift::Types::STRING, :name => 'colName'},
     COLTYPE => {:type => ::Thrift::Types::STRING, :name => 'colType'},
-    STATSDATA => {:type => ::Thrift::Types::STRUCT, :name => 'statsData', :class => ::ColumnStatisticsData}
+    STATSDATA => {:type => ::Thrift::Types::STRUCT, :name => 'statsData', :class => ::ColumnStatisticsData},
+    STATISTICS => {:type => ::Thrift::Types::STRING, :name => 'statistics'}
   }
 
   def struct_fields; FIELDS; end
@@ -2208,6 +2210,7 @@ class ColumnStatisticsObj
     raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field colName is unset!') unless @colName
     raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field colType is unset!') unless @colType
     raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field statsData is unset!') unless @statsData
+    raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field statistics is unset!') unless @statistics
   end
 
   ::Thrift::Struct.generate_accessors self

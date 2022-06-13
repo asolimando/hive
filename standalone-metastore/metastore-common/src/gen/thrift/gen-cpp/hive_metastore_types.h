@@ -4668,19 +4668,23 @@ class ColumnStatisticsObj : public virtual ::apache::thrift::TBase {
   ColumnStatisticsObj& operator=(const ColumnStatisticsObj&);
   ColumnStatisticsObj() noexcept
                       : colName(),
-                        colType() {
+                        colType(),
+                        statistics() {
   }
 
   virtual ~ColumnStatisticsObj() noexcept;
   std::string colName;
   std::string colType;
   ColumnStatisticsData statsData;
+  std::string statistics;
 
   void __set_colName(const std::string& val);
 
   void __set_colType(const std::string& val);
 
   void __set_statsData(const ColumnStatisticsData& val);
+
+  void __set_statistics(const std::string& val);
 
   bool operator == (const ColumnStatisticsObj & rhs) const
   {
@@ -4689,6 +4693,8 @@ class ColumnStatisticsObj : public virtual ::apache::thrift::TBase {
     if (!(colType == rhs.colType))
       return false;
     if (!(statsData == rhs.statsData))
+      return false;
+    if (!(statistics == rhs.statistics))
       return false;
     return true;
   }

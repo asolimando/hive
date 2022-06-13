@@ -558,7 +558,8 @@ union ColumnStatisticsData {
 struct ColumnStatisticsObj {
 1: required string colName,
 2: required string colType,
-3: required ColumnStatisticsData statsData
+3: required ColumnStatisticsData statsData,
+4: required string statistics
 }
 
 struct ColumnStatisticsDesc {
