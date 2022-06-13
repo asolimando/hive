@@ -226,22 +226,20 @@ class DirectSqlUpdateStat {
 
   private void insertIntoPartColStatTable(Map<PartColNameInfo, MPartitionColumnStatistics> insertMap,
                                           long maxCsId,
-                                          Connection dbConn) throws SQLException, MetaException, NoSuchObjectException {
+                                          Connection dbConn) throws SQLException {
     PreparedStatement preparedStatement = null;
     int numRows = 0;
     String insert = "INSERT INTO \"PART_COL_STATS\" (\"CS_ID\", \"CAT_NAME\", \"DB_NAME\","
             + "\"TABLE_NAME\", \"PARTITION_NAME\", \"COLUMN_NAME\", \"COLUMN_TYPE\", \"PART_ID\","
-            + " \"LONG_LOW_VALUE\", \"LONG_HIGH_VALUE\", \"DOUBLE_HIGH_VALUE\", \"DOUBLE_LOW_VALUE\","
-            + " \"BIG_DECIMAL_LOW_VALUE\", \"BIG_DECIMAL_HIGH_VALUE\", \"NUM_NULLS\", \"NUM_DISTINCTS\", \"BIT_VECTOR\" ,"
-            + " \"AVG_COL_LEN\", \"MAX_COL_LEN\", \"NUM_TRUES\", \"NUM_FALSES\", \"LAST_ANALYZED\", \"ENGINE\") values "
-            + "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            + " \"STATISTICS\", \"LAST_ANALYZED\", \"ENGINE\") values "
+            + "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     try {
       preparedStatement = dbConn.prepareStatement(insert);
-      for (Map.Entry entry : insertMap.entrySet()) {
-        PartColNameInfo partColNameInfo = (PartColNameInfo) entry.getKey();
-        Long partId = partColNameInfo.partitionId;
-        MPartitionColumnStatistics mPartitionColumnStatistics = (MPartitionColumnStatistics) entry.getValue();
+      for (Map.Entry<PartColNameInfo, MPartitionColumnStatistics> entry : insertMap.entrySet()) {
+        PartColNameInfo partColNameInfo = entry.getKey();
+        long partId = partColNameInfo.partitionId;
+        MPartitionColumnStatistics mPartitionColumnStatistics = entry.getValue();
 
         preparedStatement.setLong(1, maxCsId);
         preparedStatement.setString(2, mPartitionColumnStatistics.getCatName());
@@ -251,21 +249,9 @@ class DirectSqlUpdateStat {
         preparedStatement.setString(6, mPartitionColumnStatistics.getColName());
         preparedStatement.setString(7, mPartitionColumnStatistics.getColType());
         preparedStatement.setLong(8, partId);
-        preparedStatement.setObject(9, mPartitionColumnStatistics.getLongLowValue());
-        preparedStatement.setObject(10, mPartitionColumnStatistics.getLongHighValue());
-        preparedStatement.setObject(11, mPartitionColumnStatistics.getDoubleHighValue());
-        preparedStatement.setObject(12, mPartitionColumnStatistics.getDoubleLowValue());
-        preparedStatement.setString(13, mPartitionColumnStatistics.getDecimalLowValue());
-        preparedStatement.setString(14, mPartitionColumnStatistics.getDecimalHighValue());
-        preparedStatement.setObject(15, mPartitionColumnStatistics.getNumNulls());
-        preparedStatement.setObject(16, mPartitionColumnStatistics.getNumDVs());
-        preparedStatement.setObject(17, mPartitionColumnStatistics.getBitVector());
-        preparedStatement.setObject(18, mPartitionColumnStatistics.getAvgColLen());
-        preparedStatement.setObject(19, mPartitionColumnStatistics.getMaxColLen());
-        preparedStatement.setObject(20, mPartitionColumnStatistics.getNumTrues());
-        preparedStatement.setObject(21, mPartitionColumnStatistics.getNumFalses());
-        preparedStatement.setLong(22, mPartitionColumnStatistics.getLastAnalyzed());
-        preparedStatement.setString(23, mPartitionColumnStatistics.getEngine());
+        preparedStatement.setString(9, mPartitionColumnStatistics.getStatistics());
+        preparedStatement.setLong(10, mPartitionColumnStatistics.getLastAnalyzed());
+        preparedStatement.setString(11, mPartitionColumnStatistics.getEngine());
 
         maxCsId++;
         numRows++;

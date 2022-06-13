@@ -29,7 +29,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category(MetastoreUnitTest.class)
-public class DateColumnStatsMergerTest {
+public class DateAbstractColumnStatsMergerTest {
 
   private static final Date DATE_1 = new Date(1);
   private static final Date DATE_2 = new Date(2);

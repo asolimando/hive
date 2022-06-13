@@ -241,13 +241,12 @@ public class DescTableOperation extends DDLOperation<DescTableDesc> {
     ColStatistics cs = StatsUtils.getColStatsForPartCol(ci, parts, context.getConf());
     ColumnStatisticsData data = new ColumnStatisticsData();
     ColStatistics.Range r = cs.getRange();
-    StatObjectConverter.fillColumnStatisticsData(partCol.getType(), data, r == null ? null : r.minValue,
+    String statistics = StatObjectConverter.fillColumnStatisticsData(partCol.getType(), r == null ? null : r.minValue,
         r == null ? null : r.maxValue, r == null ? null : r.minValue, r == null ? null : r.maxValue,
         r == null ? null : r.minValue.toString(), r == null ? null : r.maxValue.toString(),
         cs.getNumNulls(), cs.getCountDistint(), null, cs.getAvgColLen(), cs.getAvgColLen(),
         cs.getNumTrues(), cs.getNumFalses());
-    ColumnStatisticsObj cso = new ColumnStatisticsObj(partCol.getName(), partCol.getType(), data);
-    colStats.add(cso);
+    colStats.add(new ColumnStatisticsObj(partCol.getName(), partCol.getType(), data, statistics));
     StatsSetupConst.setColumnStatsState(tableProps, colNames);
   }
 

@@ -4095,11 +4095,14 @@ public class ObjectStore implements RawStore, Configurable {
 
   /**
    * Gets partition names from the table via ORM (JDOQL) filter pushdown.
-   * @param table The table.
+   * @param catName The catalog name.
+   * @param dbName The database name.
+   * @param tblName The table name.
    * @param tree The expression tree from which JDOQL filter will be made.
    * @param maxParts Maximum number of partitions to return.
    * @param isValidatedFilter Whether the filter was pre-validated for JDOQL pushdown by a client
    *   (old hive client or non-hive one); if it was and we fail to create a filter, we will throw.
+   * @param partitionKeys the partitioning keys.
    * @return Resulting partitions. Can be null if isValidatedFilter is false, and
    *         there was error deriving the JDO filter.
    */
@@ -10062,12 +10065,11 @@ public class ObjectStore implements RawStore, Configurable {
   protected ColumnStatistics getTableColumnStatisticsInternal(
       String catName, String dbName, String tableName, final List<String> colNames, String engine,
       boolean allowSql, boolean allowJdo) throws MetaException, NoSuchObjectException {
-    final boolean enableBitVector = MetastoreConf.getBoolVar(getConf(), ConfVars.STATS_FETCH_BITVECTOR);
     return new GetStatHelper(normalizeIdentifier(catName), normalizeIdentifier(dbName),
         normalizeIdentifier(tableName), allowSql, allowJdo, null) {
       @Override
       protected ColumnStatistics getSqlResult(GetHelper<ColumnStatistics> ctx) throws MetaException {
-        return directSql.getTableStats(catName, dbName, tblName, colNames, engine, enableBitVector);
+        return directSql.getTableStats(catName, dbName, tblName, colNames, engine);
       }
 
       @Override
@@ -10086,7 +10088,7 @@ public class ObjectStore implements RawStore, Configurable {
           if (desc.getLastAnalyzed() > mStat.getLastAnalyzed()) {
             desc.setLastAnalyzed(mStat.getLastAnalyzed());
           }
-          statObjs.add(StatObjectConverter.getTableColumnStatisticsObj(mStat, enableBitVector));
+          statObjs.add(StatObjectConverter.getTableColumnStatisticsObj(mStat));
           Deadline.checkTimeout();
         }
         ColumnStatistics colStat = new ColumnStatistics(desc, statObjs);
@@ -10185,12 +10187,10 @@ public class ObjectStore implements RawStore, Configurable {
   protected List<ColumnStatistics> getPartitionColumnStatisticsInternal(
       String catName, String dbName, String tableName, final List<String> partNames, final List<String> colNames,
       String engine, boolean allowSql, boolean allowJdo) throws MetaException, NoSuchObjectException {
-    final boolean enableBitVector = MetastoreConf.getBoolVar(getConf(), ConfVars.STATS_FETCH_BITVECTOR);
     return new GetListHelper<ColumnStatistics>(catName, dbName, tableName, allowSql, allowJdo) {
       @Override
-      protected List<ColumnStatistics> getSqlResult(
-          GetHelper<List<ColumnStatistics>> ctx) throws MetaException {
-        return directSql.getPartitionStats(catName, dbName, tblName, partNames, colNames, engine, enableBitVector);
+      protected List<ColumnStatistics> getSqlResult(GetHelper<List<ColumnStatistics>> ctx) throws MetaException {
+        return directSql.getPartitionStats(catName, dbName, tblName, partNames, colNames, engine);
       }
       @Override
       protected List<ColumnStatistics> getJdoResult(GetHelper<List<ColumnStatistics>> ctx)
@@ -10217,7 +10217,7 @@ public class ObjectStore implements RawStore, Configurable {
             csd = StatObjectConverter.getPartitionColumnStatisticsDesc(mStatsObj);
             curList = new ArrayList<>(colNames.size());
           }
-          curList.add(StatObjectConverter.getPartitionColumnStatisticsObj(mStatsObj, enableBitVector));
+          curList.add(StatObjectConverter.getPartitionColumnStatisticsObj(mStatsObj));
           lastPartName = partName;
           Deadline.checkTimeout();
         }
@@ -10273,13 +10273,12 @@ public class ObjectStore implements RawStore, Configurable {
     final boolean useDensityFunctionForNDVEstimation = MetastoreConf.getBoolVar(getConf(),
         ConfVars.STATS_NDV_DENSITY_FUNCTION);
     final double ndvTuner = MetastoreConf.getDoubleVar(getConf(), ConfVars.STATS_NDV_TUNER);
-    final boolean enableBitVector = MetastoreConf.getBoolVar(getConf(), ConfVars.STATS_FETCH_BITVECTOR);
     return new GetHelper<AggrStats>(catName, dbName, tblName, true, false) {
       @Override
       protected AggrStats getSqlResult(GetHelper<AggrStats> ctx)
           throws MetaException {
         return directSql.aggrColStatsForPartitions(catName, dbName, tblName, partNames,
-            colNames, engine, useDensityFunctionForNDVEstimation, ndvTuner, enableBitVector);
+            colNames, engine, useDensityFunctionForNDVEstimation, ndvTuner);
       }
       @Override
       protected AggrStats getJdoResult(GetHelper<AggrStats> ctx)
@@ -10299,20 +10298,17 @@ public class ObjectStore implements RawStore, Configurable {
   @Override
   public List<MetaStoreServerUtils.ColStatsObjWithSourceInfo> getPartitionColStatsForDatabase(String catName, String dbName)
       throws MetaException, NoSuchObjectException {
-    final boolean enableBitVector =
-        MetastoreConf.getBoolVar(getConf(), ConfVars.STATS_FETCH_BITVECTOR);
     return new GetHelper<List<MetaStoreServerUtils.ColStatsObjWithSourceInfo>>(
         catName, dbName, null, true, false) {
       @Override
       protected List<MetaStoreServerUtils.ColStatsObjWithSourceInfo> getSqlResult(
           GetHelper<List<MetaStoreServerUtils.ColStatsObjWithSourceInfo>> ctx) throws MetaException {
-        return directSql.getColStatsForAllTablePartitions(catName, dbName, enableBitVector);
+        return directSql.getColStatsForAllTablePartitions(catName, dbName);
       }
 
       @Override
       protected List<MetaStoreServerUtils.ColStatsObjWithSourceInfo> getJdoResult(
-          GetHelper<List<MetaStoreServerUtils.ColStatsObjWithSourceInfo>> ctx)
-          throws MetaException, NoSuchObjectException {
+          GetHelper<List<MetaStoreServerUtils.ColStatsObjWithSourceInfo>> ctx) throws MetaException {
         // This is fast path for query optimizations, if we can find this info
         // quickly using directSql, do it. No point in failing back to slow path
         // here.
