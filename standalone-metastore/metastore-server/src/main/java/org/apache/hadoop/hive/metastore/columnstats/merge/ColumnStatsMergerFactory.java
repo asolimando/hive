@@ -52,33 +52,39 @@ public class ColumnStatsMergerFactory {
    */
   public static ColumnStatsMerger getColumnStatsMerger(final ColumnStatisticsObj statsObjNew,
       final ColumnStatisticsObj statsObjOld) {
-    Objects.requireNonNull(statsObjNew, "Column 1 statistcs cannot be null");
-    Objects.requireNonNull(statsObjOld, "Column 2 statistcs cannot be null");
+    Objects.requireNonNull(statsObjNew, "Column 1 statistics cannot be null");
+    Objects.requireNonNull(statsObjOld, "Column 2 statistics cannot be null");
 
-    final _Fields typeNew = statsObjNew.getStatsData().getSetField();
-    final _Fields typeOld = statsObjOld.getStatsData().getSetField();
+    final String typeNew = statsObjNew.getColType();
+    final String typeOld = statsObjOld.getColType();
 
-    Preconditions.checkArgument(typeNew == typeOld, "The column types must match: [" + typeNew + "::" + typeOld + "]");
+    Preconditions.checkArgument(typeNew.equals(typeOld), "The column types must match: [" + typeNew + "::" + typeOld + "]");
 
     switch (typeNew) {
-    case BOOLEAN_STATS:
+    case "boolean":
       return new BooleanColumnStatsMerger();
-    case LONG_STATS:
+    case "int":
+    case "tinyint":
+    case "bigint":
+    case "smallint":
       return new LongColumnStatsMerger();
-    case DOUBLE_STATS:
+    case "float":
+    case "double":
       return new DoubleColumnStatsMerger();
-    case STRING_STATS:
+    case "varchar":
+    case "char":
+    case "string":
       return new StringColumnStatsMerger();
-    case BINARY_STATS:
+    case "binary":
       return new BinaryColumnStatsMerger();
-    case DECIMAL_STATS:
+    case "decimal":
       return new DecimalColumnStatsMerger();
-    case DATE_STATS:
+    case "date":
       return new DateColumnStatsMerger();
-    case TIMESTAMP_STATS:
+    case "timestamp":
       return new TimestampColumnStatsMerger();
     default:
-      throw new IllegalArgumentException("Unknown stats type: " + statsObjNew.getStatsData().getSetField());
+      throw new IllegalArgumentException("Unknown stats type: " + typeNew);
     }
   }
 

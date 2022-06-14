@@ -173,7 +173,7 @@ public class MetaStoreServerUtils {
         if (aliasToAggregator.get(obj.getColName()) == null) {
           aliasToAggregator.put(obj.getColName(),
               ColumnStatsAggregatorFactory.getColumnStatsAggregator(
-                  obj.getStatsData().getSetField(), useDensityFunctionForNDVEstimation, ndvTuner));
+                  obj.getColType(), useDensityFunctionForNDVEstimation, ndvTuner));
           colStatsMap.put(aliasToAggregator.get(obj.getColName()),
               new ArrayList<ColStatsObjWithSourceInfo>());
         }
@@ -735,11 +735,9 @@ public class MetaStoreServerUtils {
         // because we already confirm that the stats is accurate
         // it is impossible that the column types have been changed while the
         // column stats is still accurate.
-        assert (statsObjNew.getStatsData().getSetField() == statsObjOld.getStatsData()
-            .getSetField());
+        assert statsObjNew.getColType().equals(statsObjOld.getColType());
         // If statsObjOld is found, we can merge.
-        ColumnStatsMerger merger = ColumnStatsMergerFactory.getColumnStatsMerger(statsObjNew,
-            statsObjOld);
+        ColumnStatsMerger merger = ColumnStatsMergerFactory.getColumnStatsMerger(statsObjNew, statsObjOld);
         merger.merge(statsObjNew, statsObjOld);
       }
       // If statsObjOld is not found, we just use statsObjNew as it is accurate.

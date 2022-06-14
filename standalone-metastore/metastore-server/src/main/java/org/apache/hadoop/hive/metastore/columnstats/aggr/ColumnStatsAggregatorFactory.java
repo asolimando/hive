@@ -30,42 +30,56 @@ import org.apache.hadoop.hive.metastore.columnstats.cache.DoubleColumnStatsDataI
 import org.apache.hadoop.hive.metastore.columnstats.cache.LongColumnStatsDataInspector;
 import org.apache.hadoop.hive.metastore.columnstats.cache.StringColumnStatsDataInspector;
 import org.apache.hadoop.hive.metastore.columnstats.cache.TimestampColumnStatsDataInspector;
+import org.apache.hadoop.hive.metastore.columnstats.merge.BinaryColumnStatsMerger;
+import org.apache.hadoop.hive.metastore.columnstats.merge.BooleanColumnStatsMerger;
+import org.apache.hadoop.hive.metastore.columnstats.merge.DateColumnStatsMerger;
+import org.apache.hadoop.hive.metastore.columnstats.merge.DecimalColumnStatsMerger;
+import org.apache.hadoop.hive.metastore.columnstats.merge.DoubleColumnStatsMerger;
+import org.apache.hadoop.hive.metastore.columnstats.merge.LongColumnStatsMerger;
+import org.apache.hadoop.hive.metastore.columnstats.merge.StringColumnStatsMerger;
+import org.apache.hadoop.hive.metastore.columnstats.merge.TimestampColumnStatsMerger;
 
 public class ColumnStatsAggregatorFactory {
 
   private ColumnStatsAggregatorFactory() {
   }
 
-  public static ColumnStatsAggregator getColumnStatsAggregator(_Fields type,
+  public static ColumnStatsAggregator getColumnStatsAggregator(String type,
       boolean useDensityFunctionForNDVEstimation, double ndvTuner) {
     ColumnStatsAggregator agg;
     switch (type) {
-    case BOOLEAN_STATS:
+    case "boolean":
       agg = new BooleanColumnStatsAggregator();
       break;
-    case LONG_STATS:
+    case "int":
+    case "tinyint":
+    case "bigint":
+    case "smallint":
       agg = new LongColumnStatsAggregator();
       break;
-    case DATE_STATS:
-      agg = new DateColumnStatsAggregator();
-      break;
-    case TIMESTAMP_STATS:
-      agg = new TimestampColumnStatsAggregator();
-      break;
-    case DOUBLE_STATS:
+    case "float":
+    case "double":
       agg = new DoubleColumnStatsAggregator();
       break;
-    case STRING_STATS:
+    case "varchar":
+    case "char":
+    case "string":
       agg = new StringColumnStatsAggregator();
       break;
-    case BINARY_STATS:
+    case "binary":
       agg = new BinaryColumnStatsAggregator();
       break;
-    case DECIMAL_STATS:
+    case "decimal":
       agg = new DecimalColumnStatsAggregator();
       break;
+    case "date":
+      agg = new DateColumnStatsAggregator();
+      break;
+    case "timestamp":
+      agg = new TimestampColumnStatsAggregator();
+      break;
     default:
-      throw new RuntimeException("Woh, bad.  Unknown stats type " + type.toString());
+      throw new RuntimeException("Unknown stats type " + type);
     }
     agg.useDensityFunctionForNDVEstimation = useDensityFunctionForNDVEstimation;
     agg.ndvTuner = ndvTuner;

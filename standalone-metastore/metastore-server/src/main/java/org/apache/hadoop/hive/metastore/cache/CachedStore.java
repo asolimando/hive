@@ -2382,9 +2382,8 @@ public class CachedStore implements RawStore, Configurable {
               new ColStatsObjWithSourceInfo(colStatsForPart, catName, dbName, tblName, partName);
           colStatsWithPartInfoList.add(colStatsWithPartInfo);
           if (colStatsAggregator == null) {
-            colStatsAggregator = ColumnStatsAggregatorFactory
-                .getColumnStatsAggregator(colStatsForPart.getStatsData().getSetField(),
-                    useDensityFunctionForNDVEstimation, ndvTuner);
+            colStatsAggregator = ColumnStatsAggregatorFactory.getColumnStatsAggregator(
+                colStatsForPart.getColType(), useDensityFunctionForNDVEstimation, ndvTuner);
           }
           partsFoundForColumn++;
         } else {
