@@ -1711,25 +1711,10 @@ class MetaStoreDirectSql {
         areAllPartsFound, useDensityFunctionForNDVEstimation, ndvTuner);
   }
 
-  private ColumnStatisticsObj prepareCSObj (Object[] row, int i) throws MetaException {
+  private ColumnStatisticsObj prepareCSObj (Object[] row, int i) {
     String colName = (String) row[i++];
     String colType = (String) row[i++];
-    Object longLowValue = row[i++];
-    Object longHighValue = row[i++];
-    Object doubleLowValue = row[i++];
-    Object doubleHighValue = row[i++];
-    Object decimalLowValue = row[i++];
-    Object decimalHighValue = row[i++];
-    Object numNulls = row[i++];
-    Object numDVs = row[i++];
-    Object bitVector = row[i++];
-    Object avgColLen = row[i++];
-    Object maxColLen = row[i++];
-    Object numTrues = row[i++];
-    Object numFalses = row[i];
-    String statistics = StatObjectConverter.fillColumnStatisticsData(colType, longLowValue, longHighValue,
-        doubleLowValue, doubleHighValue, decimalLowValue, decimalHighValue, numNulls, numDVs, bitVector,
-        avgColLen, maxColLen, numTrues, numFalses);
+    String statistics = (String) row[i];
     return new ColumnStatisticsObj(colName, colType, new ColumnStatisticsData(), statistics);
   }
 
