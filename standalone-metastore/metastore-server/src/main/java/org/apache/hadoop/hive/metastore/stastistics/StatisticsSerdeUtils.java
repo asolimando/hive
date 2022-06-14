@@ -31,6 +31,14 @@ import org.apache.hadoop.hive.metastore.api.DoubleColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.LongColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.StringColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.TimestampColumnStatsData;
+import org.apache.hadoop.hive.metastore.stastistics.ImmutableBinaryColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.ImmutableBooleanColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.ImmutableDateColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.ImmutableDecimalColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.ImmutableDoubleColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.ImmutableLongColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.ImmutableStringColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.ImmutableTimestampColumnStats;
 
 public class StatisticsSerdeUtils {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().registerModule(new Jdk8Module());
@@ -49,6 +57,23 @@ public class StatisticsSerdeUtils {
       .put("decimal", DecimalColumnStatsData.class)
       .put("timestamp", TimestampColumnStatsData.class)
       .put("date", DateColumnStatsData.class)
+      .build();
+
+  private static final ImmutableMap<String, Class<?>> IMMUTABLE_TYPE_CLASS_MAP = new ImmutableMap.Builder<String, Class<?>>()
+      .put("boolean", ImmutableBooleanColumnStats.class)
+      .put("string", ImmutableStringColumnStats.class)
+      .put("varchar", ImmutableStringColumnStats.class)
+      .put("char", ImmutableStringColumnStats.class)
+      .put("binary", ImmutableBinaryColumnStats.class)
+      .put("smallint", ImmutableLongColumnStats.class)
+      .put("int", ImmutableLongColumnStats.class)
+      .put("tinyint", ImmutableLongColumnStats.class)
+      .put("bigint", ImmutableLongColumnStats.class)
+      .put("double", ImmutableDoubleColumnStats.class)
+      .put("float", ImmutableDoubleColumnStats.class)
+      .put("decimal", ImmutableDecimalColumnStats.class)
+      .put("timestamp", ImmutableTimestampColumnStats.class)
+      .put("date", ImmutableDateColumnStats.class)
       .build();
 
   private StatisticsSerdeUtils() {
@@ -150,7 +175,7 @@ public class StatisticsSerdeUtils {
   }
 
   public static ColumnStatisticsData getColumnStatisticsData(String colType, String statistics) throws JsonProcessingException {
-    return ((AbstractColumnStats) OBJECT_MAPPER.readValue(statistics, TYPE_CLASS_MAP.get(colType)))
+    return ((AbstractColumnStats) OBJECT_MAPPER.readValue(statistics, IMMUTABLE_TYPE_CLASS_MAP.get(colType)))
         .getColumnStatsData();
   }
 }
