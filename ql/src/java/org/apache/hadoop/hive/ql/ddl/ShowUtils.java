@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.hive.ql.ddl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
@@ -38,6 +39,9 @@ import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.LongColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.StringColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.TimestampColumnStatsData;
+import org.apache.hadoop.hive.metastore.stastistics.AbstractColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.ImmutableDateColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.StatisticsSerdeUtils;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.io.DateWritableV2;
@@ -133,14 +137,15 @@ public final class ShowUtils {
 
 
   public static String[] extractColumnValues(FieldSchema column, boolean isColumnStatsAvailable,
-      ColumnStatisticsObj columnStatisticsObj) {
+      ColumnStatisticsObj columnStatisticsObj) throws JsonProcessingException {
     List<String> values = new ArrayList<>();
     values.add(column.getName());
     values.add(column.getType());
 
     if (isColumnStatsAvailable) {
       if (columnStatisticsObj != null) {
-        ColumnStatisticsData statsData = columnStatisticsObj.getStatsData();
+        ColumnStatisticsData statsData = StatisticsSerdeUtils.getColumnStatisticsData(
+            columnStatisticsObj.getColType(), columnStatisticsObj.getStatistics());
         if (statsData.isSetBinaryStats()) {
           BinaryColumnStatsData binaryStats = statsData.getBinaryStats();
           values.addAll(Lists.newArrayList("", "", "" + binaryStats.getNumNulls(), "",
