@@ -42,6 +42,9 @@ import org.apache.hadoop.hive.metastore.api.utils.DecimalUtils;
 import org.apache.hadoop.hive.metastore.client.builder.DatabaseBuilder;
 import org.apache.hadoop.hive.metastore.columnstats.cache.LongColumnStatsDataInspector;
 import org.apache.hadoop.hive.metastore.conf.MetastoreConf;
+import org.apache.hadoop.hive.metastore.stastistics.ImmutableLongColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.ImmutableStringColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.StatisticsSerdeUtils;
 import org.apache.hadoop.hive.metastore.utils.FileUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -994,14 +997,14 @@ import static org.apache.hadoop.hive.metastore.Warehouse.DEFAULT_CATALOG_NAME;
     statsDesc.setPartName("col");
     List<ColumnStatisticsObj> colStatObjs = new ArrayList<>();
 
+    String serializedStats = StatisticsSerdeUtils.serializeStatistics(ImmutableLongColumnStats.builder()
+        .lowValue(0)
+        .highValue(100)
+        .numNulls(50)
+        .numDVs(30)
+        .build());
     ColumnStatisticsData data = new ColumnStatisticsData();
-    ColumnStatisticsObj colStats = new ColumnStatisticsObj(colName, "int", data);
-    LongColumnStatsDataInspector longStats = new LongColumnStatsDataInspector();
-    longStats.setLowValue(0);
-    longStats.setHighValue(100);
-    longStats.setNumNulls(50);
-    longStats.setNumDVs(30);
-    data.setLongStats(longStats);
+    ColumnStatisticsObj colStats = new ColumnStatisticsObj(colName, "int", data, serializedStats);
     colStatObjs.add(colStats);
 
     stats.setStatsDesc(statsDesc);
@@ -1078,14 +1081,14 @@ import static org.apache.hadoop.hive.metastore.Warehouse.DEFAULT_CATALOG_NAME;
     statsDesc.setPartName("col");
     List<ColumnStatisticsObj> colStatObjs = new ArrayList<>();
 
+    String serializedStats = StatisticsSerdeUtils.serializeStatistics(ImmutableLongColumnStats.builder()
+        .lowValue(0)
+        .highValue(100)
+        .numNulls(50)
+        .numDVs(30)
+        .build());
     ColumnStatisticsData data = new ColumnStatisticsData();
-    ColumnStatisticsObj colStats = new ColumnStatisticsObj(colName, "int", data);
-    LongColumnStatsDataInspector longStats = new LongColumnStatsDataInspector();
-    longStats.setLowValue(0);
-    longStats.setHighValue(100);
-    longStats.setNumNulls(50);
-    longStats.setNumDVs(30);
-    data.setLongStats(longStats);
+    ColumnStatisticsObj colStats = new ColumnStatisticsObj(colName, "int", data, serializedStats);
     colStatObjs.add(colStats);
 
     stats.setStatsDesc(statsDesc);
@@ -1094,7 +1097,15 @@ import static org.apache.hadoop.hive.metastore.Warehouse.DEFAULT_CATALOG_NAME;
 
     cachedStore.updatePartitionColumnStatistics(stats.deepCopy(), partVals1, null, -1);
 
-    longStats.setNumDVs(40);
+    serializedStats = StatisticsSerdeUtils.serializeStatistics(ImmutableLongColumnStats.builder()
+        .lowValue(0)
+        .highValue(100)
+        .numNulls(50)
+        .numDVs(40)
+        .build());
+    colStats = new ColumnStatisticsObj(colName, "int", data, serializedStats);
+    colStatObjs = Collections.singletonList(colStats);
+    stats.setStatsObj(colStatObjs);
     cachedStore.updatePartitionColumnStatistics(stats.deepCopy(), partVals2, null, -1);
 
     List<String> colNames = new ArrayList<>();
@@ -1158,21 +1169,19 @@ import static org.apache.hadoop.hive.metastore.Warehouse.DEFAULT_CATALOG_NAME;
     statsDesc.setPartName("col");
     List<ColumnStatisticsObj> colStatObjs = new ArrayList<>();
 
-    ColumnStatisticsData data = new ColumnStatisticsData();
-    ColumnStatisticsObj colStats = new ColumnStatisticsObj(colName, "int", data);
-    LongColumnStatsDataInspector longStats = new LongColumnStatsDataInspector();
-    longStats.setLowValue(0);
-    longStats.setHighValue(100);
-    longStats.setNumNulls(50);
-    longStats.setNumDVs(30);
-
     HyperLogLog hll = HyperLogLog.builder().build();
     hll.addLong(1);
     hll.addLong(2);
     hll.addLong(3);
-    longStats.setBitVectors(hll.serialize());
-
-    data.setLongStats(longStats);
+    String serializedStats = StatisticsSerdeUtils.serializeStatistics(ImmutableLongColumnStats.builder()
+        .lowValue(0)
+        .highValue(100)
+        .numNulls(50)
+        .numDVs(30)
+        .bitVector(hll.serialize())
+        .build());
+    ColumnStatisticsData data = new ColumnStatisticsData();
+    ColumnStatisticsObj colStats = new ColumnStatisticsObj(colName, "int", data, serializedStats);
     colStatObjs.add(colStats);
 
     stats.setStatsDesc(statsDesc);
@@ -1181,13 +1190,21 @@ import static org.apache.hadoop.hive.metastore.Warehouse.DEFAULT_CATALOG_NAME;
 
     cachedStore.updatePartitionColumnStatistics(stats.deepCopy(), partVals1, null, -1);
 
-    longStats.setNumDVs(40);
     hll = HyperLogLog.builder().build();
     hll.addLong(2);
     hll.addLong(3);
     hll.addLong(4);
     hll.addLong(5);
-    longStats.setBitVectors(hll.serialize());
+    serializedStats = StatisticsSerdeUtils.serializeStatistics(ImmutableLongColumnStats.builder()
+        .lowValue(0)
+        .highValue(100)
+        .numNulls(50)
+        .numDVs(40)
+        .bitVector(hll.serialize())
+        .build());
+    colStats = new ColumnStatisticsObj(colName, "int", data, serializedStats);
+    colStatObjs = Collections.singletonList(colStats);
+    stats.setStatsObj(colStatObjs);
 
     cachedStore.updatePartitionColumnStatistics(stats.deepCopy(), partVals2, null, -1);
 
@@ -2080,7 +2097,7 @@ import static org.apache.hadoop.hive.metastore.Warehouse.DEFAULT_CATALOG_NAME;
   }
 
   private ColumnStatistics createColStats(ColumnStatisticsData data, Table tbl, FieldSchema column, String partName) {
-    ColumnStatisticsObj statObj = new ColumnStatisticsObj(column.getName(), column.getType(), data);
+    ColumnStatisticsObj statObj = new ColumnStatisticsObj(column.getName(), column.getType(), data, "");
     ColumnStatistics colStats = new ColumnStatistics();
     ColumnStatisticsDesc statsDesc = new ColumnStatisticsDesc(true, tbl.getDbName(), tbl.getTableName());
     statsDesc.setPartName(partName);

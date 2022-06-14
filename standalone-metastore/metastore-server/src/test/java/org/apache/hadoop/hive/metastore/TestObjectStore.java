@@ -43,7 +43,6 @@ import org.apache.hadoop.hive.metastore.api.InvalidInputException;
 import org.apache.hadoop.hive.metastore.api.InvalidObjectException;
 import org.apache.hadoop.hive.metastore.api.ListPackageRequest;
 import org.apache.hadoop.hive.metastore.api.ListStoredProcedureRequest;
-import org.apache.hadoop.hive.metastore.api.LongColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.NotificationEvent;
@@ -60,7 +59,6 @@ import org.apache.hadoop.hive.metastore.api.Role;
 import org.apache.hadoop.hive.metastore.api.SQLForeignKey;
 import org.apache.hadoop.hive.metastore.api.SQLPrimaryKey;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
-import org.apache.hadoop.hive.metastore.api.SourceTable;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.StoredProcedure;
 import org.apache.hadoop.hive.metastore.api.Table;
@@ -79,6 +77,9 @@ import org.apache.hadoop.hive.metastore.metrics.MetricsConstants;
 import org.apache.hadoop.hive.metastore.model.MNotificationLog;
 import org.apache.hadoop.hive.metastore.model.MNotificationNextId;
 import org.apache.hadoop.hive.metastore.partition.spec.PartitionSpecProxy;
+import org.apache.hadoop.hive.metastore.stastistics.AbstractLongColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.ImmutableLongColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.StatisticsSerdeUtils;
 import org.apache.hadoop.hive.metastore.utils.MetaStoreServerUtils;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -806,14 +807,15 @@ public class TestObjectStore {
         stats.setEngine(ENGINE);
 
         ColumnStatisticsData data = new ColumnStatisticsData();
-        LongColumnStatsData longStats = new LongColumnStatsData();
-        longStats.setNumNulls(1);
-        longStats.setNumDVs(2);
-        longStats.setLowValue(3);
-        longStats.setHighValue(4);
-        data.setLongStats(longStats);
 
-        ColumnStatisticsObj partStats = new ColumnStatisticsObj("test_part_col", "int", data);
+        String serializedStats = StatisticsSerdeUtils.serializeStatistics(ImmutableLongColumnStats.builder()
+            .numNulls(1)
+            .numDVs(2)
+            .lowValue(3)
+            .highValue(4)
+            .build());
+
+        ColumnStatisticsObj partStats = new ColumnStatisticsObj("test_part_col", "int", data, serializedStats);
         statsObjList.add(partStats);
 
         try (AutoCloseable c = deadline()) {

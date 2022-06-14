@@ -175,7 +175,7 @@ public class TestPartitionStat extends MetaStoreClientTest {
     statsDesc.setPartName(pName);
     colStats.setStatsDesc(statsDesc);
     colStats.setEngine(HIVE_ENGINE);
-    ColumnStatisticsObj statObj = new ColumnStatisticsObj(PART_COL_NAME, "int", partitionStats);
+    ColumnStatisticsObj statObj = new ColumnStatisticsObj(PART_COL_NAME, "int", partitionStats, "");
     colStats.addToStatsObj(statObj);
     return colStats;
   }
