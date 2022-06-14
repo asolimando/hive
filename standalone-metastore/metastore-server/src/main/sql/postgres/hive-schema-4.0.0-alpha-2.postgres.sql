@@ -566,7 +566,7 @@ CREATE TABLE "TAB_COL_STATS" (
  "COLUMN_NAME" character varying(767) DEFAULT NULL::character varying,
  "COLUMN_TYPE" character varying(128) DEFAULT NULL::character varying,
  "TBL_ID" bigint NOT NULL,
- "STATISTICS" bytea,
+ "STATISTICS" text,
  "LAST_ANALYZED" bigint NOT NULL,
  "ENGINE" character varying(128) NOT NULL
 );
@@ -593,7 +593,7 @@ CREATE TABLE "PART_COL_STATS" (
  "COLUMN_NAME" character varying(767) DEFAULT NULL::character varying,
  "COLUMN_TYPE" character varying(128) DEFAULT NULL::character varying,
  "PART_ID" bigint NOT NULL,
- "STATISTICS" bytea,
+ "STATISTICS" text,
  "LAST_ANALYZED" bigint NOT NULL,
  "ENGINE" character varying(128) NOT NULL
 );

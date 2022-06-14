@@ -1005,7 +1005,7 @@
         <column name="COLUMN_TYPE" length="128" jdbc-type="VARCHAR" allows-null="false"/>
       </field>
       <field name="statistics">
-        <column name="STATISTICS" jdbc-type="BLOB" allows-null="true"/>
+        <column name="STATISTICS" jdbc-type="STRING" allows-null="true"/>
       </field>
       <field name="lastAnalyzed">
         <column name="LAST_ANALYZED" jdbc-type="BIGINT" allows-null="false"/>
@@ -1043,7 +1043,7 @@
         <column name="COLUMN_TYPE" length="128" jdbc-type="VARCHAR" allows-null="false"/>
       </field>
       <field name="statistics">
-        <column name="STATISTICS" jdbc-type="BLOB" allows-null="true"/>
+        <column name="STATISTICS" jdbc-type="STRING" allows-null="true"/>
       </field>
       <field name="lastAnalyzed">
         <column name="LAST_ANALYZED" jdbc-type="BIGINT" allows-null="false"/>
