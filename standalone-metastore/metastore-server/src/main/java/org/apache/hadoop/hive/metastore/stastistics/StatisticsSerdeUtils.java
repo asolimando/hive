@@ -55,6 +55,10 @@ public class StatisticsSerdeUtils {
     throw new AssertionException("StatisticsSerdeUtils util class should not be instantiated");
   }
 
+  public static String serializeStatistics(AbstractColumnStats stats) throws JsonProcessingException {
+    return OBJECT_MAPPER.writeValueAsString(stats);
+  }
+
   public static String serializeBooleanStats(Long numTrues, Long numFalses, Long numNulls) throws JsonProcessingException {
     return OBJECT_MAPPER.writeValueAsString(
         org.apache.hadoop.hive.metastore.stastistics.ImmutableBooleanColumnStats.builder()

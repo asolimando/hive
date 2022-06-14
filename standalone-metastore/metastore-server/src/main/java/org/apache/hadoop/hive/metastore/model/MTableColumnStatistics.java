@@ -36,7 +36,9 @@ public class MTableColumnStatistics {
   private String statistics;
   private long lastAnalyzed;
 
-  public MTableColumnStatistics() {}
+  public MTableColumnStatistics() {
+    // empty-constructor
+  }
 
   public MTable getTable() {
     return table;
