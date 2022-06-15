@@ -169,7 +169,9 @@ public class StatObjectConverter {
 
   public static String getStatisticsString(ColumnStatisticsObj statsObj) throws MetaException {
     try {
-      String statistics;
+      if (statsObj.getStatistics() != null && !statsObj.getStatistics().isEmpty()) {
+        return statsObj.getStatistics();
+      }
       if (statsObj.getStatsData().isSetBooleanStats()) {
         BooleanColumnStatsData boolStats = statsObj.getStatsData().getBooleanStats();
         BooleanColumnStats.Builder statsBuilder = BooleanColumnStats.builder();
@@ -182,7 +184,7 @@ public class StatObjectConverter {
         if (boolStats.isSetNumNulls()) {
           statsBuilder.numNulls(boolStats.getNumNulls());
         }
-        statistics = StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
+        return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
       } else if (statsObj.getStatsData().isSetLongStats()) {
         LongColumnStatsData longStats = statsObj.getStatsData().getLongStats();
         LongColumnStats.Builder statsBuilder = LongColumnStats.builder();
@@ -201,7 +203,7 @@ public class StatObjectConverter {
         if (longStats.isSetHighValue()) {
           statsBuilder.highValue(longStats.getHighValue());
         }
-        statistics = StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
+        return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
       } else if (statsObj.getStatsData().isSetDoubleStats()) {
         DoubleColumnStatsData doubleStats = statsObj.getStatsData().getDoubleStats();
         DoubleColumnStats.Builder statsBuilder = DoubleColumnStats.builder();
@@ -220,7 +222,7 @@ public class StatObjectConverter {
         if (doubleStats.isSetHighValue()) {
           statsBuilder.highValue(doubleStats.getHighValue());
         }
-        statistics = StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
+        return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
       } else if (statsObj.getStatsData().isSetDecimalStats()) {
         DecimalColumnStatsData decimalStats = statsObj.getStatsData().getDecimalStats();
         DecimalColumnStats.Builder statsBuilder = DecimalColumnStats.builder();
@@ -239,7 +241,7 @@ public class StatObjectConverter {
         if (decimalStats.isSetHighValue()) {
           statsBuilder.highValue(DecimalUtils.createJdoDecimalString(decimalStats.getHighValue()));
         }
-        statistics = StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
+        return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
       } else if (statsObj.getStatsData().isSetStringStats()) {
         StringColumnStatsData stringStats = statsObj.getStatsData().getStringStats();
         StringColumnStats.Builder statsBuilder = StringColumnStats.builder();
@@ -258,7 +260,7 @@ public class StatObjectConverter {
         if (stringStats.isSetAvgColLen()) {
           statsBuilder.avgColLen(stringStats.getAvgColLen());
         }
-        statistics = StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
+        return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
       } else if (statsObj.getStatsData().isSetBinaryStats()) {
         BinaryColumnStatsData binaryStats = statsObj.getStatsData().getBinaryStats();
         StringColumnStats.Builder statsBuilder = StringColumnStats.builder();
@@ -271,7 +273,7 @@ public class StatObjectConverter {
         if (binaryStats.isSetAvgColLen()) {
           statsBuilder.avgColLen(binaryStats.getAvgColLen());
         }
-        statistics = StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
+        return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
       } else if (statsObj.getStatsData().isSetDateStats()) {
         DateColumnStatsData dateStats = statsObj.getStatsData().getDateStats();
         DateColumnStats.Builder statsBuilder = DateColumnStats.builder();
@@ -290,7 +292,7 @@ public class StatObjectConverter {
         if (dateStats.isSetHighValue()) {
           statsBuilder.highValue(dateStats.getHighValue().getDaysSinceEpoch());
         }
-        statistics = StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
+        return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
       } else if (statsObj.getStatsData().isSetTimestampStats()) {
         TimestampColumnStatsData timestampStats = statsObj.getStatsData().getTimestampStats();
         DateColumnStats.Builder statsBuilder = DateColumnStats.builder();
@@ -309,11 +311,10 @@ public class StatObjectConverter {
         if (timestampStats.isSetHighValue()) {
           statsBuilder.highValue(timestampStats.getHighValue().getSecondsSinceEpoch());
         }
-        statistics = StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
+        return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
       } else {
         throw new IllegalArgumentException("Unrecognized statistics object's type");
       }
-      return statistics;
     } catch (JsonProcessingException e) {
       throw new MetaException("Exception while serializing table partition column statistics:" + e.getMessage());
     }
