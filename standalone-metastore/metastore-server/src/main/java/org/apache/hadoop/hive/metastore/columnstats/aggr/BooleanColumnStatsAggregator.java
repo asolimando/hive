@@ -21,10 +21,11 @@ package org.apache.hadoop.hive.metastore.columnstats.aggr;
 
 import java.util.List;
 
-import org.apache.hadoop.hive.metastore.api.BooleanColumnStatsData;
-import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsObj;
 import org.apache.hadoop.hive.metastore.api.MetaException;
+import org.apache.hadoop.hive.metastore.stastistics.BooleanColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.StatisticsSerdeUtils;
 import org.apache.hadoop.hive.metastore.utils.MetaStoreServerUtils.ColStatsObjWithSourceInfo;
 
 public class BooleanColumnStatsAggregator extends ColumnStatsAggregator {
@@ -32,31 +33,27 @@ public class BooleanColumnStatsAggregator extends ColumnStatsAggregator {
   @Override
   public ColumnStatisticsObj aggregate(List<ColStatsObjWithSourceInfo> colStatsWithSourceInfo,
       List<String> partNames, boolean areAllPartsFound) throws MetaException {
-    ColumnStatisticsObj statsObj = null;
+    BooleanColumnStats stats = null;
     String colType = null;
     String colName = null;
-    BooleanColumnStatsData aggregateData = null;
-    for (ColStatsObjWithSourceInfo csp : colStatsWithSourceInfo) {
-      ColumnStatisticsObj cso = csp.getColStatsObj();
-      if (statsObj == null) {
-        colName = cso.getColName();
-        colType = cso.getColType();
-        statsObj = ColumnStatsAggregatorFactory.newColumnStaticsObj(colName, colType,
-            cso.getStatsData().getSetField());
+    try {
+      for (ColStatsObjWithSourceInfo csp : colStatsWithSourceInfo) {
+        ColumnStatisticsObj cso = csp.getColStatsObj();
+        if (stats == null) {
+          colName = cso.getColName();
+          colType = cso.getColType();
+          stats = (BooleanColumnStats) StatisticsSerdeUtils.deserializeStatistics(colType, cso.getStatistics());
+        } else {
+          BooleanColumnStats newStats = (BooleanColumnStats) StatisticsSerdeUtils.deserializeStatistics(
+              colType, cso.getStatistics());
+          stats = (BooleanColumnStats) stats.merge(newStats);
+        }
       }
-      BooleanColumnStatsData newData = cso.getStatsData().getBooleanStats();
-      if (aggregateData == null) {
-        aggregateData = newData.deepCopy();
-      } else {
-        aggregateData.setNumTrues(aggregateData.getNumTrues() + newData.getNumTrues());
-        aggregateData.setNumFalses(aggregateData.getNumFalses() + newData.getNumFalses());
-        aggregateData.setNumNulls(aggregateData.getNumNulls() + newData.getNumNulls());
-      }
+      ColumnStatisticsObj statsObj = ColumnStatsAggregatorFactory.newColumnStaticsObj(colName, colType);
+      statsObj.setStatistics(stats == null ? "" : StatisticsSerdeUtils.serializeStatistics(stats));
+      return statsObj;
+    } catch (JsonProcessingException e) {
+      throw new MetaException("Exception for statistics' serde: " + e.getMessage());
     }
-    ColumnStatisticsData columnStatisticsData = new ColumnStatisticsData();
-    columnStatisticsData.setBooleanStats(aggregateData);
-    statsObj.setStatsData(columnStatisticsData);
-    return statsObj;
   }
-
 }

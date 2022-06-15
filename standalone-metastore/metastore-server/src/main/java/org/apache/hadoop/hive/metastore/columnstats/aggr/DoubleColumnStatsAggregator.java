@@ -60,8 +60,7 @@ public class DoubleColumnStatsAggregator extends ColumnStatsAggregator implement
       if (statsObj == null) {
         colName = cso.getColName();
         colType = cso.getColType();
-        statsObj = ColumnStatsAggregatorFactory.newColumnStaticsObj(colName, colType,
-            cso.getStatsData().getSetField());
+        statsObj = ColumnStatsAggregatorFactory.newColumnStaticsObj(colName, colType);
         LOG.trace("doAllPartitionContainStats for column: {} is: {}", colName,
             doAllPartitionContainStats);
       }

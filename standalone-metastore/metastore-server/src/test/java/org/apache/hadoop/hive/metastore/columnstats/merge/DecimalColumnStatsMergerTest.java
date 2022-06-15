@@ -30,7 +30,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category(MetastoreUnitTest.class)
-public class DecimalAbstractColumnStatsMergerTest {
+public class DecimalColumnStatsMergerTest {
 
   private static final Decimal DECIMAL_3 = DecimalUtils.getDecimal(3, 0);
   private static final Decimal DECIMAL_5 = DecimalUtils.getDecimal(5, 0);

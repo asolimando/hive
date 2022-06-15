@@ -30,14 +30,6 @@ import org.apache.hadoop.hive.metastore.columnstats.cache.DoubleColumnStatsDataI
 import org.apache.hadoop.hive.metastore.columnstats.cache.LongColumnStatsDataInspector;
 import org.apache.hadoop.hive.metastore.columnstats.cache.StringColumnStatsDataInspector;
 import org.apache.hadoop.hive.metastore.columnstats.cache.TimestampColumnStatsDataInspector;
-import org.apache.hadoop.hive.metastore.columnstats.merge.BinaryColumnStatsMerger;
-import org.apache.hadoop.hive.metastore.columnstats.merge.BooleanColumnStatsMerger;
-import org.apache.hadoop.hive.metastore.columnstats.merge.DateColumnStatsMerger;
-import org.apache.hadoop.hive.metastore.columnstats.merge.DecimalColumnStatsMerger;
-import org.apache.hadoop.hive.metastore.columnstats.merge.DoubleColumnStatsMerger;
-import org.apache.hadoop.hive.metastore.columnstats.merge.LongColumnStatsMerger;
-import org.apache.hadoop.hive.metastore.columnstats.merge.StringColumnStatsMerger;
-import org.apache.hadoop.hive.metastore.columnstats.merge.TimestampColumnStatsMerger;
 
 public class ColumnStatsAggregatorFactory {
 
@@ -86,46 +78,44 @@ public class ColumnStatsAggregatorFactory {
     return agg;
   }
 
-  public static ColumnStatisticsObj newColumnStaticsObj(String colName, String colType, _Fields type) {
+  public static ColumnStatisticsObj newColumnStaticsObj(String colName, String colType) {
     ColumnStatisticsObj cso = new ColumnStatisticsObj();
     ColumnStatisticsData csd = new ColumnStatisticsData();
     cso.setColName(colName);
     cso.setColType(colType);
-    switch (type) {
-    case BOOLEAN_STATS:
+    switch (colType) {
+    case "boolean":
       csd.setBooleanStats(new BooleanColumnStatsData());
       break;
-
-    case LONG_STATS:
+    case "int":
+    case "tinyint":
+    case "bigint":
+    case "smallint":
       csd.setLongStats(new LongColumnStatsDataInspector());
       break;
-
-    case DATE_STATS:
+    case "date":
       csd.setDateStats(new DateColumnStatsDataInspector());
       break;
-
-    case TIMESTAMP_STATS:
+    case "timestamp":
       csd.setTimestampStats(new TimestampColumnStatsDataInspector());
       break;
-
-    case DOUBLE_STATS:
+    case "float":
+    case "double":
       csd.setDoubleStats(new DoubleColumnStatsDataInspector());
       break;
-
-    case STRING_STATS:
+    case "varchar":
+    case "char":
+    case "string":
       csd.setStringStats(new StringColumnStatsDataInspector());
       break;
-
-    case BINARY_STATS:
+    case "binary":
       csd.setBinaryStats(new BinaryColumnStatsData());
       break;
-
-    case DECIMAL_STATS:
+    case "decimal":
       csd.setDecimalStats(new DecimalColumnStatsDataInspector());
       break;
-
     default:
-      throw new RuntimeException("Woh, bad.  Unknown stats type!");
+      throw new RuntimeException("Unknown stats type " + colType);
     }
 
     cso.setStatsData(csd);

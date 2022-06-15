@@ -21,8 +21,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import org.apache.hadoop.hive.common.ndv.NumDistinctValueEstimator;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData;
 import org.apache.hadoop.hive.metastore.api.DoubleColumnStatsData;
+import org.apache.hadoop.hive.metastore.stastistics.DoubleColumnStats;
 import org.immutables.value.Value;
 
 import java.util.Optional;
@@ -50,5 +52,31 @@ public abstract class AbstractDoubleColumnStats extends OrderingColumnStats {
     columnStatsData.setBitVectors(bitVector());
     colStatsData.setDoubleStats(columnStatsData);
     return colStatsData;
+  }
+
+  @JsonIgnore
+  public AbstractColumnStats merge(AbstractColumnStats other) {
+    if (!(other instanceof DoubleColumnStats)) {
+      throw new IllegalArgumentException("Both objects must be of type " + DoubleColumnStats.class +
+          ", " + "found " + other.getClass());
+    }
+    DoubleColumnStats o = (DoubleColumnStats) other;
+    DoubleColumnStats.Builder statsBuilder = DoubleColumnStats.builder();
+
+    statsBuilder.lowValue(mergeLowValues(this.lowValue(), o.lowValue(), Double::compareTo));
+    statsBuilder.highValue(mergeHighValues(this.highValue(), o.highValue(), Double::compareTo));
+
+    statsBuilder.numNulls(this.numNulls() + o.numNulls());
+
+    Optional<NumDistinctValueEstimator> optEstimator = getMergedBitVector(this.bitVector(), o.bitVector());
+    if (optEstimator.isPresent()) {
+      NumDistinctValueEstimator estimator = optEstimator.get();
+      statsBuilder.bitVector(estimator.serialize());
+      statsBuilder.numDVs(estimator.estimateNumDistinctValues());
+    } else {
+      statsBuilder.numDVs(Math.max(this.numDVs(), o.numDVs()));
+    }
+
+    return statsBuilder.build();
   }
 }

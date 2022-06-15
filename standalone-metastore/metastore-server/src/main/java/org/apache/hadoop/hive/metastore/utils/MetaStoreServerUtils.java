@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -49,6 +48,7 @@ import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableListMultimap;
@@ -75,7 +75,6 @@ import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.Decimal;
 import org.apache.hadoop.hive.metastore.api.EnvironmentContext;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
-import org.apache.hadoop.hive.metastore.api.InvalidObjectException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.MetastoreException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
@@ -92,7 +91,6 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.api.hive_metastoreConstants;
 import org.apache.hadoop.hive.metastore.columnstats.aggr.ColumnStatsAggregator;
 import org.apache.hadoop.hive.metastore.columnstats.aggr.ColumnStatsAggregatorFactory;
-import org.apache.hadoop.hive.metastore.columnstats.merge.ColumnStatsMerger;
 import org.apache.hadoop.hive.metastore.columnstats.merge.ColumnStatsMergerFactory;
 import org.apache.hadoop.hive.metastore.conf.MetastoreConf;
 import org.apache.hadoop.hive.metastore.partition.spec.PartitionSpecProxy;
@@ -710,8 +708,7 @@ public class MetaStoreServerUtils {
   }
 
   // this function will merge csOld into csNew.
-  public static void mergeColStats(ColumnStatistics csNew, ColumnStatistics csOld)
-      throws InvalidObjectException {
+  public static void mergeColStats(ColumnStatistics csNew, ColumnStatistics csOld) throws MetaException {
     List<ColumnStatisticsObj> list = new ArrayList<>();
     if (csNew.getStatsObj().size() != csOld.getStatsObjSize()) {
       // Some of the columns' stats are missing
@@ -737,8 +734,11 @@ public class MetaStoreServerUtils {
         // column stats is still accurate.
         assert statsObjNew.getColType().equals(statsObjOld.getColType());
         // If statsObjOld is found, we can merge.
-        ColumnStatsMerger merger = ColumnStatsMergerFactory.getColumnStatsMerger(statsObjNew, statsObjOld);
-        merger.merge(statsObjNew, statsObjOld);
+        try {
+          statsObjNew = ColumnStatsMergerFactory.getAggregatedStats(statsObjNew, statsObjOld);
+        } catch (JsonProcessingException e) {
+          throw new MetaException("Exception while merging statistics: " + e.getMessage());
+        }
       }
       // If statsObjOld is not found, we just use statsObjNew as it is accurate.
       list.add(statsObjNew);

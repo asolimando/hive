@@ -21,12 +21,19 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import org.apache.hadoop.hive.common.ndv.NumDistinctValueEstimator;
+import org.apache.hadoop.hive.common.ndv.NumDistinctValueEstimatorFactory;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData;
 import org.apache.hadoop.hive.metastore.api.Date;
 import org.apache.hadoop.hive.metastore.api.DateColumnStatsData;
+import org.apache.hadoop.hive.metastore.stastistics.DateColumnStats;
 import org.immutables.value.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @DefaultImmutableStyle
 @Value.Immutable
@@ -52,5 +59,30 @@ public abstract class AbstractDateColumnStats extends OrderingColumnStats {
     colStatsData.setDateStats(columnStatsData);
     columnStatsData.setBitVectors(bitVector());
     return colStatsData;
+  }
+
+  @JsonIgnore
+  public AbstractColumnStats merge(AbstractColumnStats other) {
+    if (!(other instanceof DateColumnStats)) {
+      throw new IllegalArgumentException("Both objects must be of type " + DateColumnStats.class +
+          ", " + "found " + other.getClass());
+    }
+    DateColumnStats o = (DateColumnStats) other;
+    DateColumnStats.Builder statsBuilder = DateColumnStats.builder();
+
+    statsBuilder.lowValue(mergeLowValues(this.lowValue(), o.lowValue(), Long::compareTo));
+    statsBuilder.highValue(mergeHighValues(this.highValue(), o.highValue(), Long::compareTo));
+    statsBuilder.numNulls(this.numNulls() + o.numNulls());
+
+    Optional<NumDistinctValueEstimator> optEstimator = getMergedBitVector(this.bitVector(), o.bitVector());
+    if (optEstimator.isPresent()) {
+      NumDistinctValueEstimator estimator = optEstimator.get();
+      statsBuilder.bitVector(estimator.serialize());
+      statsBuilder.numDVs(estimator.estimateNumDistinctValues());
+    } else {
+      statsBuilder.numDVs(Math.max(this.numDVs(), o.numDVs()));
+    }
+
+    return statsBuilder.build();
   }
 }

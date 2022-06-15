@@ -62,8 +62,7 @@ public class DecimalColumnStatsAggregator extends ColumnStatsAggregator implemen
       if (statsObj == null) {
         colName = cso.getColName();
         colType = cso.getColType();
-        statsObj = ColumnStatsAggregatorFactory.newColumnStaticsObj(colName, colType,
-            cso.getStatsData().getSetField());
+        statsObj = ColumnStatsAggregatorFactory.newColumnStaticsObj(colName, colType);
         LOG.trace("doAllPartitionContainStats for column: {} is: {}", colName,
             doAllPartitionContainStats);
       }

@@ -17,11 +17,21 @@
  */
 package org.apache.hadoop.hive.metastore.stastistics;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.hadoop.hive.common.ndv.NumDistinctValueEstimator;
+import org.apache.hadoop.hive.common.ndv.NumDistinctValueEstimatorFactory;
 import org.immutables.value.Value;
+
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
 public abstract class OrderingColumnStats extends AbstractColumnStats {
+
+  private static byte[] EMPTY_HLL = new byte[] {'H', 'L', 'L'};
 
   @JsonProperty("numDVs")
   public abstract long numDVs();
@@ -29,6 +39,39 @@ public abstract class OrderingColumnStats extends AbstractColumnStats {
   @Value.Default
   @JsonProperty("bitVector")
   public byte[] bitVector() {
-    return new byte[] {'H', 'L'};
+    return EMPTY_HLL;
+  }
+
+  protected <T> Optional<T> mergeLowValues (Optional<T> low1, Optional<T> low2, Comparator<T> comparator) {
+    return Stream.of(low1, low2)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .min(comparator);
+  }
+
+  protected <T> Optional<T> mergeHighValues(Optional<T> high1, Optional<T> high2, Comparator<T> comparator) {
+    return Stream.of(high1, high2)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .max(comparator);
+  }
+
+  @JsonIgnore
+  protected long mergeNDVs(OrderingColumnStats o) {
+    return Math.max(this.numDVs(), o.numDVs());
+  }
+
+  @JsonIgnore
+  public static Optional<NumDistinctValueEstimator> getMergedBitVector(byte[] bv1, byte[] bv2) {
+    if (bv1 != null && !Arrays.equals(bv1, EMPTY_HLL) && bv2 != null && !Arrays.equals(bv2, EMPTY_HLL)) {
+      NumDistinctValueEstimator oldEst = NumDistinctValueEstimatorFactory.getNumDistinctValueEstimator(bv1);
+      NumDistinctValueEstimator newEst = NumDistinctValueEstimatorFactory.getNumDistinctValueEstimator(bv2);
+      final long ndv;
+      if (oldEst.canMerge(newEst)) {
+        oldEst.mergeEstimators(newEst);
+        return Optional.of(oldEst);
+      }
+    }
+    return Optional.empty();
   }
 }

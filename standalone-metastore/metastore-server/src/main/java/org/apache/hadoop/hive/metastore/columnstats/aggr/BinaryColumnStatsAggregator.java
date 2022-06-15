@@ -41,8 +41,7 @@ public class BinaryColumnStatsAggregator extends ColumnStatsAggregator {
       if (statsObj == null) {
         colName = cso.getColName();
         colType = cso.getColType();
-        statsObj = ColumnStatsAggregatorFactory.newColumnStaticsObj(colName, colType,
-            cso.getStatsData().getSetField());
+        statsObj = ColumnStatsAggregatorFactory.newColumnStaticsObj(colName, colType);
       }
       BinaryColumnStatsData newData = cso.getStatsData().getBinaryStats();
       if (aggregateData == null) {

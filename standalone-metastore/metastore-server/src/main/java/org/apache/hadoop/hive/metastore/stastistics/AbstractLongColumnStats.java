@@ -20,9 +20,14 @@ package org.apache.hadoop.hive.metastore.stastistics;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import org.apache.hadoop.hive.common.ndv.NumDistinctValueEstimator;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData;
+import org.apache.hadoop.hive.metastore.api.Date;
 import org.apache.hadoop.hive.metastore.api.LongColumnStatsData;
+import org.apache.hadoop.hive.metastore.stastistics.LongColumnStats;
 import org.immutables.value.Value;
 
 import java.util.Optional;
@@ -50,5 +55,31 @@ public abstract class AbstractLongColumnStats extends OrderingColumnStats {
     columnStatsData.setBitVectors(bitVector());
     colStatsData.setLongStats(columnStatsData);
     return colStatsData;
+  }
+
+  @JsonIgnore
+  public AbstractColumnStats merge(AbstractColumnStats other) {
+    if (!(other instanceof LongColumnStats)) {
+      throw new IllegalArgumentException("Both objects must be of type " + LongColumnStats.class +
+          ", " + "found " + other.getClass());
+    }
+    LongColumnStats o = (LongColumnStats) other;
+    LongColumnStats.Builder statsBuilder = LongColumnStats.builder();
+
+    statsBuilder.lowValue(mergeLowValues(this.lowValue(), o.lowValue(), Long::compareTo));
+    statsBuilder.highValue(mergeHighValues(this.highValue(), o.highValue(), Long::compareTo));
+
+    statsBuilder.numNulls(this.numNulls() + o.numNulls());
+
+    Optional<NumDistinctValueEstimator> optEstimator = getMergedBitVector(this.bitVector(), o.bitVector());
+    if (optEstimator.isPresent()) {
+      NumDistinctValueEstimator estimator = optEstimator.get();
+      statsBuilder.bitVector(estimator.serialize());
+      statsBuilder.numDVs(estimator.estimateNumDistinctValues());
+    } else {
+      statsBuilder.numDVs(Math.max(this.numDVs(), o.numDVs()));
+    }
+
+    return statsBuilder.build();
   }
 }

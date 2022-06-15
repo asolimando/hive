@@ -21,9 +21,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import org.apache.commons.lang3.ObjectUtils;
+import org.apache.hadoop.hive.common.ndv.NumDistinctValueEstimator;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData;
+import org.apache.hadoop.hive.metastore.api.Decimal;
 import org.apache.hadoop.hive.metastore.api.DecimalColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.utils.DecimalUtils;
+import org.apache.hadoop.hive.metastore.stastistics.DecimalColumnStats;
 import org.immutables.value.Value;
 
 import java.util.Optional;
@@ -51,5 +55,40 @@ public abstract class AbstractDecimalColumnStats extends OrderingColumnStats {
     columnStatsData.setBitVectors(bitVector());
     colStatsData.setDecimalStats(columnStatsData);
     return colStatsData;
+  }
+
+  @JsonIgnore
+  public AbstractColumnStats merge(AbstractColumnStats other) {
+    if (!(other instanceof DecimalColumnStats)) {
+      throw new IllegalArgumentException("Both objects must be of type " + DecimalColumnStats.class +
+          ", " + "found " + other.getClass());
+    }
+    DecimalColumnStats o = (DecimalColumnStats) other;
+    DecimalColumnStats.Builder statsBuilder = DecimalColumnStats.builder();
+
+    if (!this.lowValue().isPresent() && !o.lowValue().isPresent()) {
+      Decimal d1 = DecimalUtils.createThriftDecimal(this.lowValue().get());
+      Decimal d2 = DecimalUtils.createThriftDecimal(o.lowValue().get());
+      statsBuilder.lowValue(ObjectUtils.min(d1, d2).toString());
+    }
+
+    if (!this.highValue().isPresent() && !o.highValue().isPresent()) {
+      Decimal d1 = DecimalUtils.createThriftDecimal(this.highValue().get());
+      Decimal d2 = DecimalUtils.createThriftDecimal(o.highValue().get());
+      statsBuilder.lowValue(ObjectUtils.max(d1, d2).toString());
+    }
+
+    statsBuilder.numNulls(this.numNulls() + o.numNulls());
+
+    Optional<NumDistinctValueEstimator> optEstimator = getMergedBitVector(this.bitVector(), o.bitVector());
+    if (optEstimator.isPresent()) {
+      NumDistinctValueEstimator estimator = optEstimator.get();
+      statsBuilder.bitVector(estimator.serialize());
+      statsBuilder.numDVs(estimator.estimateNumDistinctValues());
+    } else {
+      statsBuilder.numDVs(Math.max(this.numDVs(), o.numDVs()));
+    }
+
+    return statsBuilder.build();
   }
 }

@@ -21,6 +21,7 @@ package org.apache.hadoop.hive.metastore.columnstats.merge;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.hadoop.hive.metastore.api.BinaryColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.BooleanColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData;
@@ -34,6 +35,8 @@ import org.apache.hadoop.hive.metastore.columnstats.cache.StringColumnStatsDataI
 import org.apache.hadoop.hive.metastore.columnstats.cache.TimestampColumnStatsDataInspector;
 
 import com.google.common.base.Preconditions;
+import org.apache.hadoop.hive.metastore.stastistics.AbstractColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.StatisticsSerdeUtils;
 
 public class ColumnStatsMergerFactory {
 
@@ -41,51 +44,31 @@ public class ColumnStatsMergerFactory {
   }
 
   /**
-   * Get a statistics merger to merge the given statistics object.
+   * Merge statistics and update the new  to merge the given statistics object.
    *
-   * @param statsObjNew A statistics object to merger
-   * @param statsObjOld A statistics object to merger
-   * @return A ColumnStatsMerger object that can process the requested type
+   * @param statsObjNew A statistics object to merge
+   * @param statsObjOld A statistics object to merge
+   * @return the aggregate statistics object.
    * @throws IllegalArgumentException if the column statistics objects are of
    *           two different types or if they are of an unknown type
    * @throws NullPointerException if statistics object is {@code null}
    */
-  public static ColumnStatsMerger getColumnStatsMerger(final ColumnStatisticsObj statsObjNew,
-      final ColumnStatisticsObj statsObjOld) {
+  public static ColumnStatisticsObj getAggregatedStats(final ColumnStatisticsObj statsObjNew,
+      final ColumnStatisticsObj statsObjOld) throws JsonProcessingException {
     Objects.requireNonNull(statsObjNew, "Column 1 statistics cannot be null");
     Objects.requireNonNull(statsObjOld, "Column 2 statistics cannot be null");
 
-    final String typeNew = statsObjNew.getColType();
-    final String typeOld = statsObjOld.getColType();
+    String typeNew = statsObjNew.getColType();
+    String typeOld = statsObjOld.getColType();
 
-    Preconditions.checkArgument(typeNew.equals(typeOld), "The column types must match: [" + typeNew + "::" + typeOld + "]");
+    Preconditions.checkArgument(typeNew.equals(typeOld),
+        "The column types must match: [" + typeNew + "::" + typeOld + "]");
 
-    switch (typeNew) {
-    case "boolean":
-      return new BooleanColumnStatsMerger();
-    case "int":
-    case "tinyint":
-    case "bigint":
-    case "smallint":
-      return new LongColumnStatsMerger();
-    case "float":
-    case "double":
-      return new DoubleColumnStatsMerger();
-    case "varchar":
-    case "char":
-    case "string":
-      return new StringColumnStatsMerger();
-    case "binary":
-      return new BinaryColumnStatsMerger();
-    case "decimal":
-      return new DecimalColumnStatsMerger();
-    case "date":
-      return new DateColumnStatsMerger();
-    case "timestamp":
-      return new TimestampColumnStatsMerger();
-    default:
-      throw new IllegalArgumentException("Unknown stats type: " + typeNew);
-    }
+    AbstractColumnStats newStats = StatisticsSerdeUtils.deserializeStatistics(typeNew, statsObjNew.getStatistics());
+    AbstractColumnStats oldStats = StatisticsSerdeUtils.deserializeStatistics(typeNew, statsObjOld.getStatistics());
+
+    return new ColumnStatisticsObj(statsObjNew.getColName(), statsObjNew.getColType(),
+        statsObjNew.getStatsData(), StatisticsSerdeUtils.serializeStatistics(newStats.merge(oldStats)));
   }
 
   public static ColumnStatisticsObj newColumnStaticsObj(final String colName, final String colType,

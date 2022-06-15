@@ -1096,10 +1096,7 @@ import static org.apache.hadoop.hive.metastore.Warehouse.DEFAULT_CATALOG_NAME;
 
     cachedStore.updatePartitionColumnStatistics(stats.deepCopy(), partVals1, null, -1);
 
-    serializedStats = StatisticsSerdeUtils.serializeStatistics(LongColumnStats.builder()
-        .from(longColumnStats)
-        .numDVs(40)
-        .build());
+    serializedStats = StatisticsSerdeUtils.serializeStatistics(longColumnStats.withNumDVs(40));
     colStats = new ColumnStatisticsObj(colName, "int", data, serializedStats);
     colStatObjs = Collections.singletonList(colStats);
     stats.setStatsObj(colStatObjs);
@@ -1193,11 +1190,9 @@ import static org.apache.hadoop.hive.metastore.Warehouse.DEFAULT_CATALOG_NAME;
     hll.addLong(3);
     hll.addLong(4);
     hll.addLong(5);
-    serializedStats = StatisticsSerdeUtils.serializeStatistics(LongColumnStats.builder()
-        .from(longColumnStats)
-        .numDVs(40)
-        .bitVector(hll.serialize())
-        .build());
+    serializedStats = StatisticsSerdeUtils.serializeStatistics(longColumnStats
+        .withNumDVs(40)
+        .withBitVector(hll.serialize()));
     colStats = new ColumnStatisticsObj(colName, "int", data, serializedStats);
     colStatObjs = Collections.singletonList(colStats);
     stats.setStatsObj(colStatObjs);

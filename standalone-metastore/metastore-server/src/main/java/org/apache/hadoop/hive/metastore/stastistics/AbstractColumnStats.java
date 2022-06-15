@@ -32,4 +32,7 @@ public abstract class AbstractColumnStats {
 
   @JsonIgnore
   public abstract ColumnStatisticsData getColumnStatsData();
+
+  @JsonIgnore
+  public abstract AbstractColumnStats merge(AbstractColumnStats o);
 }
