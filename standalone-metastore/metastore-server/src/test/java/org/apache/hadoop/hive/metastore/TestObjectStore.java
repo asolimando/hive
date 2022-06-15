@@ -77,8 +77,7 @@ import org.apache.hadoop.hive.metastore.metrics.MetricsConstants;
 import org.apache.hadoop.hive.metastore.model.MNotificationLog;
 import org.apache.hadoop.hive.metastore.model.MNotificationNextId;
 import org.apache.hadoop.hive.metastore.partition.spec.PartitionSpecProxy;
-import org.apache.hadoop.hive.metastore.stastistics.AbstractLongColumnStats;
-import org.apache.hadoop.hive.metastore.stastistics.ImmutableLongColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.LongColumnStats;
 import org.apache.hadoop.hive.metastore.stastistics.StatisticsSerdeUtils;
 import org.apache.hadoop.hive.metastore.utils.MetaStoreServerUtils;
 import org.junit.Assert;
@@ -808,7 +807,7 @@ public class TestObjectStore {
 
         ColumnStatisticsData data = new ColumnStatisticsData();
 
-        String serializedStats = StatisticsSerdeUtils.serializeStatistics(ImmutableLongColumnStats.builder()
+        String serializedStats = StatisticsSerdeUtils.serializeStatistics(LongColumnStats.builder()
             .numNulls(1)
             .numDVs(2)
             .lowValue(3)

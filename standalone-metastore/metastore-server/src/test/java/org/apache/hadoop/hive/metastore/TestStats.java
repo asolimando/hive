@@ -39,10 +39,10 @@ import org.apache.hadoop.hive.metastore.client.builder.DatabaseBuilder;
 import org.apache.hadoop.hive.metastore.client.builder.PartitionBuilder;
 import org.apache.hadoop.hive.metastore.client.builder.TableBuilder;
 import org.apache.hadoop.hive.metastore.conf.MetastoreConf;
-import org.apache.hadoop.hive.metastore.stastistics.ImmutableDateColumnStats;
-import org.apache.hadoop.hive.metastore.stastistics.ImmutableDoubleColumnStats;
-import org.apache.hadoop.hive.metastore.stastistics.ImmutableLongColumnStats;
-import org.apache.hadoop.hive.metastore.stastistics.ImmutableStringColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.DateColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.DoubleColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.LongColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.StringColumnStats;
 import org.apache.hadoop.hive.metastore.stastistics.StatisticsSerdeUtils;
 import org.apache.thrift.TException;
 import org.junit.After;
@@ -547,7 +547,7 @@ public class TestStats {
 
     @Override
     ColumnStatisticsObj generate() throws JsonProcessingException {
-      String serializedStats = StatisticsSerdeUtils.serializeStatistics(ImmutableDateColumnStats.builder()
+      String serializedStats = StatisticsSerdeUtils.serializeStatistics(DateColumnStats.builder()
           .numNulls(getNumNulls())
           .numDVs(getNumDvs())
           .build());
@@ -608,7 +608,7 @@ public class TestStats {
 
     @Override
     ColumnStatisticsObj generate() throws JsonProcessingException {
-      String serializedStats = StatisticsSerdeUtils.serializeStatistics(ImmutableDoubleColumnStats.builder()
+      String serializedStats = StatisticsSerdeUtils.serializeStatistics(DoubleColumnStats.builder()
           .numNulls(genNumNulls())
           .numDVs(genNumDvs())
           .build());
@@ -672,7 +672,7 @@ public class TestStats {
 
     @Override
     ColumnStatisticsObj generate() throws JsonProcessingException {
-      String serializedStats = StatisticsSerdeUtils.serializeStatistics(ImmutableLongColumnStats.builder()
+      String serializedStats = StatisticsSerdeUtils.serializeStatistics(LongColumnStats.builder()
           .numNulls(genNumNulls())
           .numDVs(getNumDvs())
           .build());
@@ -731,7 +731,7 @@ public class TestStats {
 
     @Override
     ColumnStatisticsObj generate() throws JsonProcessingException {
-      String serializedStats = StatisticsSerdeUtils.serializeStatistics(ImmutableStringColumnStats.builder()
+      String serializedStats = StatisticsSerdeUtils.serializeStatistics(StringColumnStats.builder()
           .maxColLen(getMaxLen())
           .avgColLen(genAvgLens())
           .build());

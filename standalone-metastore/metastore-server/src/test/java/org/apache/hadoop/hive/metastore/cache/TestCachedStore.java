@@ -38,12 +38,10 @@ import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.annotation.MetastoreCheckinTest;
 import org.apache.hadoop.hive.metastore.api.*;
-import org.apache.hadoop.hive.metastore.api.utils.DecimalUtils;
 import org.apache.hadoop.hive.metastore.client.builder.DatabaseBuilder;
 import org.apache.hadoop.hive.metastore.columnstats.cache.LongColumnStatsDataInspector;
 import org.apache.hadoop.hive.metastore.conf.MetastoreConf;
-import org.apache.hadoop.hive.metastore.stastistics.ImmutableLongColumnStats;
-import org.apache.hadoop.hive.metastore.stastistics.ImmutableStringColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.LongColumnStats;
 import org.apache.hadoop.hive.metastore.stastistics.StatisticsSerdeUtils;
 import org.apache.hadoop.hive.metastore.utils.FileUtils;
 import org.junit.After;
@@ -997,7 +995,7 @@ import static org.apache.hadoop.hive.metastore.Warehouse.DEFAULT_CATALOG_NAME;
     statsDesc.setPartName("col");
     List<ColumnStatisticsObj> colStatObjs = new ArrayList<>();
 
-    String serializedStats = StatisticsSerdeUtils.serializeStatistics(ImmutableLongColumnStats.builder()
+    String serializedStats = StatisticsSerdeUtils.serializeStatistics(LongColumnStats.builder()
         .lowValue(0)
         .highValue(100)
         .numNulls(50)
@@ -1081,12 +1079,13 @@ import static org.apache.hadoop.hive.metastore.Warehouse.DEFAULT_CATALOG_NAME;
     statsDesc.setPartName("col");
     List<ColumnStatisticsObj> colStatObjs = new ArrayList<>();
 
-    String serializedStats = StatisticsSerdeUtils.serializeStatistics(ImmutableLongColumnStats.builder()
+    LongColumnStats longColumnStats = LongColumnStats.builder()
         .lowValue(0)
         .highValue(100)
         .numNulls(50)
         .numDVs(30)
-        .build());
+        .build();
+    String serializedStats = StatisticsSerdeUtils.serializeStatistics(longColumnStats);
     ColumnStatisticsData data = new ColumnStatisticsData();
     ColumnStatisticsObj colStats = new ColumnStatisticsObj(colName, "int", data, serializedStats);
     colStatObjs.add(colStats);
@@ -1097,10 +1096,8 @@ import static org.apache.hadoop.hive.metastore.Warehouse.DEFAULT_CATALOG_NAME;
 
     cachedStore.updatePartitionColumnStatistics(stats.deepCopy(), partVals1, null, -1);
 
-    serializedStats = StatisticsSerdeUtils.serializeStatistics(ImmutableLongColumnStats.builder()
-        .lowValue(0)
-        .highValue(100)
-        .numNulls(50)
+    serializedStats = StatisticsSerdeUtils.serializeStatistics(LongColumnStats.builder()
+        .from(longColumnStats)
         .numDVs(40)
         .build());
     colStats = new ColumnStatisticsObj(colName, "int", data, serializedStats);
@@ -1173,13 +1170,14 @@ import static org.apache.hadoop.hive.metastore.Warehouse.DEFAULT_CATALOG_NAME;
     hll.addLong(1);
     hll.addLong(2);
     hll.addLong(3);
-    String serializedStats = StatisticsSerdeUtils.serializeStatistics(ImmutableLongColumnStats.builder()
+    LongColumnStats longColumnStats = LongColumnStats.builder()
         .lowValue(0)
         .highValue(100)
         .numNulls(50)
         .numDVs(30)
         .bitVector(hll.serialize())
-        .build());
+        .build();
+    String serializedStats = StatisticsSerdeUtils.serializeStatistics(longColumnStats);
     ColumnStatisticsData data = new ColumnStatisticsData();
     ColumnStatisticsObj colStats = new ColumnStatisticsObj(colName, "int", data, serializedStats);
     colStatObjs.add(colStats);
@@ -1195,10 +1193,8 @@ import static org.apache.hadoop.hive.metastore.Warehouse.DEFAULT_CATALOG_NAME;
     hll.addLong(3);
     hll.addLong(4);
     hll.addLong(5);
-    serializedStats = StatisticsSerdeUtils.serializeStatistics(ImmutableLongColumnStats.builder()
-        .lowValue(0)
-        .highValue(100)
-        .numNulls(50)
+    serializedStats = StatisticsSerdeUtils.serializeStatistics(LongColumnStats.builder()
+        .from(longColumnStats)
         .numDVs(40)
         .bitVector(hll.serialize())
         .build());
