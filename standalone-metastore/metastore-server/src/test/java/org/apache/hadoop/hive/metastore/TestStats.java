@@ -39,6 +39,8 @@ import org.apache.hadoop.hive.metastore.client.builder.DatabaseBuilder;
 import org.apache.hadoop.hive.metastore.client.builder.PartitionBuilder;
 import org.apache.hadoop.hive.metastore.client.builder.TableBuilder;
 import org.apache.hadoop.hive.metastore.conf.MetastoreConf;
+import org.apache.hadoop.hive.metastore.stastistics.BinaryColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.BooleanColumnStats;
 import org.apache.hadoop.hive.metastore.stastistics.DateColumnStats;
 import org.apache.hadoop.hive.metastore.stastistics.DoubleColumnStats;
 import org.apache.hadoop.hive.metastore.stastistics.LongColumnStats;
@@ -466,7 +468,12 @@ public class TestStats {
 
     @Override
     ColumnStatisticsObj generate() throws JsonProcessingException {
-      String serializedStats = StatisticsSerdeUtils.serializeBinaryStats(genNumNulls(), genMaxLen(), genAvgLens());
+      String serializedStats = StatisticsSerdeUtils.serializeStatistics(
+          BinaryColumnStats.builder()
+          .maxColLen(genMaxLen())
+          .avgColLen(genAvgLens())
+          .numNulls(genNumNulls())
+          .build());
       ColumnStatisticsData data = new ColumnStatisticsData();
       return new ColumnStatisticsObj(colName, colType, data, serializedStats);
     }
@@ -499,7 +506,12 @@ public class TestStats {
 
     @Override
     ColumnStatisticsObj generate() throws JsonProcessingException {
-      String serializedStats = StatisticsSerdeUtils.serializeBooleanStats(getNumTrues(), getNumFalses(), getNumNulls());
+      String serializedStats = StatisticsSerdeUtils.serializeStatistics(
+          BooleanColumnStats.builder()
+              .numTrues(getNumTrues())
+              .numFalses(getNumFalses())
+              .numNulls(getNumNulls())
+              .build());
       ColumnStatisticsData data = new ColumnStatisticsData();
       return new ColumnStatisticsObj(colName, colType, data, serializedStats);
     }

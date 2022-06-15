@@ -39,8 +39,6 @@ import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.LongColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.StringColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.TimestampColumnStatsData;
-import org.apache.hadoop.hive.metastore.stastistics.AbstractColumnStats;
-import org.apache.hadoop.hive.metastore.stastistics.ImmutableDateColumnStats;
 import org.apache.hadoop.hive.metastore.stastistics.StatisticsSerdeUtils;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.metadata.HiveException;

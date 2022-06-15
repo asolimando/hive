@@ -23,52 +23,28 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import javolution.testing.AssertionException;
-import org.apache.hadoop.hive.metastore.api.BinaryColumnStatsData;
-import org.apache.hadoop.hive.metastore.api.BooleanColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData;
-import org.apache.hadoop.hive.metastore.api.DateColumnStatsData;
-import org.apache.hadoop.hive.metastore.api.DecimalColumnStatsData;
-import org.apache.hadoop.hive.metastore.api.DoubleColumnStatsData;
-import org.apache.hadoop.hive.metastore.api.LongColumnStatsData;
-import org.apache.hadoop.hive.metastore.api.StringColumnStatsData;
-import org.apache.hadoop.hive.metastore.api.TimestampColumnStatsData;
 
 public class StatisticsSerdeUtils {
   @VisibleForTesting
   protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().registerModule(new Jdk8Module());
 
+  // fully qualified for class names to make IDE happy
   private static final ImmutableMap<String, Class<?>> TYPE_CLASS_MAP = new ImmutableMap.Builder<String, Class<?>>()
-      .put("boolean", BooleanColumnStatsData.class)
-      .put("string", StringColumnStatsData.class)
-      .put("varchar", StringColumnStatsData.class)
-      .put("char", StringColumnStatsData.class)
-      .put("binary", BinaryColumnStatsData.class)
-      .put("smallint", LongColumnStatsData.class)
-      .put("int", LongColumnStatsData.class)
-      .put("tinyint", LongColumnStatsData.class)
-      .put("bigint", LongColumnStatsData.class)
-      .put("double", DoubleColumnStatsData.class)
-      .put("float", DoubleColumnStatsData.class)
-      .put("decimal", DecimalColumnStatsData.class)
-      .put("timestamp", TimestampColumnStatsData.class)
-      .put("date", DateColumnStatsData.class)
-      .build();
-
-  private static final ImmutableMap<String, Class<?>> IMMUTABLE_TYPE_CLASS_MAP = new ImmutableMap.Builder<String, Class<?>>()
-      .put("boolean", BooleanColumnStats.class)
-      .put("string", StringColumnStats.class)
-      .put("varchar", StringColumnStats.class)
-      .put("char", StringColumnStats.class)
-      .put("binary", BinaryColumnStats.class)
-      .put("smallint", LongColumnStats.class)
-      .put("int", LongColumnStats.class)
-      .put("tinyint", LongColumnStats.class)
-      .put("bigint", LongColumnStats.class)
-      .put("double", DoubleColumnStats.class)
-      .put("float", DoubleColumnStats.class)
-      .put("decimal", DecimalColumnStats.class)
-      .put("timestamp", TimestampColumnStats.class)
-      .put("date", DateColumnStats.class)
+      .put("boolean", org.apache.hadoop.hive.metastore.stastistics.BooleanColumnStats.class)
+      .put("string", org.apache.hadoop.hive.metastore.stastistics.StringColumnStats.class)
+      .put("varchar", org.apache.hadoop.hive.metastore.stastistics.StringColumnStats.class)
+      .put("char", org.apache.hadoop.hive.metastore.stastistics.StringColumnStats.class)
+      .put("binary", org.apache.hadoop.hive.metastore.stastistics.BinaryColumnStats.class)
+      .put("smallint", org.apache.hadoop.hive.metastore.stastistics.LongColumnStats.class)
+      .put("int", org.apache.hadoop.hive.metastore.stastistics.LongColumnStats.class)
+      .put("tinyint", org.apache.hadoop.hive.metastore.stastistics.LongColumnStats.class)
+      .put("bigint", org.apache.hadoop.hive.metastore.stastistics.LongColumnStats.class)
+      .put("double", org.apache.hadoop.hive.metastore.stastistics.DoubleColumnStats.class)
+      .put("float", org.apache.hadoop.hive.metastore.stastistics.DoubleColumnStats.class)
+      .put("decimal", org.apache.hadoop.hive.metastore.stastistics.DecimalColumnStats.class)
+      .put("timestamp", org.apache.hadoop.hive.metastore.stastistics.TimestampColumnStats.class)
+      .put("date", org.apache.hadoop.hive.metastore.stastistics.DateColumnStats.class)
       .build();
 
   private StatisticsSerdeUtils() {
@@ -79,94 +55,12 @@ public class StatisticsSerdeUtils {
     return OBJECT_MAPPER.writeValueAsString(stats);
   }
 
-  public static String serializeBooleanStats(Long numTrues, Long numFalses, Long numNulls) throws JsonProcessingException {
-    return OBJECT_MAPPER.writeValueAsString(BooleanColumnStats.builder()
-            .numTrues(numTrues)
-            .numFalses(numFalses)
-            .numNulls(numNulls)
-            .build());
-  }
-
-  public static String serializeLongStats(Long numNulls, Long numNDVs, byte[] bitVector, Long lowValue, Long highValue)
-      throws JsonProcessingException {
-    return OBJECT_MAPPER.writeValueAsString(LongColumnStats.builder()
-            .numNulls(numNulls)
-            .numDVs(numNDVs)
-            .bitVector(bitVector)
-            .lowValue(lowValue)
-            .highValue(highValue)
-            .build());
-  }
-
-  public static String serializeDoubleStats(Long numNulls, Long numNDVs, byte[] bitVector, Double lowValue, Double highValue)
-      throws JsonProcessingException {
-    return OBJECT_MAPPER.writeValueAsString(DoubleColumnStats.builder()
-            .numNulls(numNulls)
-            .numDVs(numNDVs)
-            .bitVector(bitVector)
-            .lowValue(lowValue)
-            .highValue(highValue)
-            .build());
-  }
-
-  public static String serializeDecimalStats(Long numNulls, Long numNDVs, byte[] bitVector, String lowValue, String highValue)
-      throws JsonProcessingException {
-    return OBJECT_MAPPER.writeValueAsString(DecimalColumnStats.builder()
-            .numNulls(numNulls)
-            .numDVs(numNDVs)
-            .bitVector(bitVector)
-            .lowValue(lowValue)
-            .highValue(highValue)
-            .build());
-  }
-
-  public static String serializeStringStats(Long numNulls, Long numNDVs, byte[] bitVector, Long maxColLen, Double avgColLen)
-      throws JsonProcessingException {
-    return OBJECT_MAPPER.writeValueAsString(StringColumnStats.builder()
-            .numNulls(numNulls)
-            .numDVs(numNDVs)
-            .bitVector(bitVector)
-            .maxColLen(maxColLen)
-            .avgColLen(avgColLen)
-            .build());
-  }
-
-  public static String serializeBinaryStats(Long numNulls, Long maxColLen, Double avgColLen) throws JsonProcessingException {
-    return OBJECT_MAPPER.writeValueAsString(BinaryColumnStats.builder()
-            .numNulls(numNulls)
-            .maxColLen(maxColLen)
-            .avgColLen(avgColLen)
-            .build());
-  }
-
-  public static String serializeDateStats(Long numNulls, Long numNDVs, byte[] bitVector, Long lowValue, Long highValue)
-      throws JsonProcessingException {
-    return OBJECT_MAPPER.writeValueAsString(DateColumnStats.builder()
-            .numNulls(numNulls)
-            .numDVs(numNDVs)
-            .bitVector(bitVector)
-            .lowValue(lowValue)
-            .highValue(highValue)
-            .build());
-  }
-
-  public static String serializeTimestampStats(Long numNulls, Long numNDVs, byte[] bitVector, Long lowValue, Long highValue)
-      throws JsonProcessingException {
-    return OBJECT_MAPPER.writeValueAsString(TimestampColumnStats.builder()
-            .numNulls(numNulls)
-            .numDVs(numNDVs)
-            .bitVector(bitVector)
-            .lowValue(lowValue)
-            .highValue(highValue)
-            .build());
-  }
-
   public static ColumnStatisticsData getColumnStatisticsData(String colType, String statistics) throws JsonProcessingException {
-    return ((AbstractColumnStats) OBJECT_MAPPER.readValue(statistics, IMMUTABLE_TYPE_CLASS_MAP.get(colType)))
+    return ((AbstractColumnStats) OBJECT_MAPPER.readValue(statistics, TYPE_CLASS_MAP.get(colType)))
         .getColumnStatsData();
   }
 
   public static AbstractColumnStats deserializeStatistics(String colType, String statistics) throws JsonProcessingException {
-    return ((AbstractColumnStats) OBJECT_MAPPER.readValue(statistics, IMMUTABLE_TYPE_CLASS_MAP.get(colType)));
+    return ((AbstractColumnStats) OBJECT_MAPPER.readValue(statistics, TYPE_CLASS_MAP.get(colType)));
   }
 }

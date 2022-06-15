@@ -42,16 +42,35 @@ public class TestStatisticsSerde {
       .lowValue(1.0)
       .highValue(1.0)
       .build();
-  String DOUBLE_STATS_JSON = "{\"numNulls\":0,\"numDVs\":1,\"bitVector\":\"SExM4AEBxfO+SA==\",\"lowValue\":1.0,\"highValue\":1.0}";
+  private static final DoubleColumnStats DOUBLE_STATS_PARTIAL = DoubleColumnStats.builder()
+      .numNulls(0)
+      .numDVs(1)
+      .build();
+  private static final String DOUBLE_STATS_JSON =
+      "{\"numNulls\":0,\"numDVs\":1,\"bitVector\":\"SExM4AEBxfO+SA==\",\"lowValue\":1.0,\"highValue\":1.0}";
+  private static final String DOUBLE_STATS_JSON_UNKNOWN_PROPERTY =
+      "{\"numNulls\":0,\"numDVs\":1,\"bitVector\":\"SExM4AEBxfO+SA==\",\"lowValue\":1.0,\"highValue\":1.0,\"unknown\":1}";
+  private static final String DOUBLE_STATS_JSON_PARTIAL = "{\"numNulls\":0,\"numDVs\":1}";
 
   @Test
   public void testDoubleSerialization() throws JsonProcessingException {
-    Assert.assertEquals(DOUBLE_STATS_JSON,
-        StatisticsSerdeUtils.serializeDoubleStats(0L, 1L, HLL.serialize(), 1.0, 1.0));
+    Assert.assertEquals(DOUBLE_STATS_JSON, StatisticsSerdeUtils.serializeStatistics(DOUBLE_STATS));
   }
 
   @Test
   public void testDoubleDeserialization() throws JsonProcessingException {
     Assert.assertEquals(DOUBLE_STATS, StatisticsSerdeUtils.deserializeStatistics("double", DOUBLE_STATS_JSON));
+  }
+
+  @Test
+  public void testDoubleDeserializationUnknownPropertyOK() throws JsonProcessingException {
+    Assert.assertEquals(
+        DOUBLE_STATS, StatisticsSerdeUtils.deserializeStatistics("double", DOUBLE_STATS_JSON_UNKNOWN_PROPERTY));
+  }
+
+  @Test
+  public void testDoubleDeserializationPartialOK() throws JsonProcessingException {
+    Assert.assertEquals(
+        DOUBLE_STATS_PARTIAL, StatisticsSerdeUtils.deserializeStatistics("double", DOUBLE_STATS_JSON_PARTIAL));
   }
 }
