@@ -46,6 +46,7 @@ public abstract class AbstractDoubleColumnStats extends OrderingColumnStats {
     lowValue().ifPresent(columnStatsData::setLowValue);
     highValue().ifPresent(columnStatsData::setHighValue);
     columnStatsData.setNumNulls(numNulls());
+    columnStatsData.setNumDVs(numDVs());
     columnStatsData.setBitVectors(bitVector());
     colStatsData.setDoubleStats(columnStatsData);
     return colStatsData;

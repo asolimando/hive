@@ -47,6 +47,8 @@ public abstract class AbstractStringColumnStats extends VariableLengthColumnStat
     columnStatsData.setAvgColLen(avgColLen());
     columnStatsData.setMaxColLen(maxColLen());
     columnStatsData.setNumNulls(numNulls());
+    columnStatsData.setNumDVs(numDVs());
+    columnStatsData.setBitVectors(bitVector());
     colStatsData.setStringStats(columnStatsData);
     return colStatsData;
   }

@@ -47,6 +47,7 @@ public abstract class AbstractTimestampColumnStats extends OrderingColumnStats {
     lowValue().ifPresent(v -> columnStatsData.setLowValue(new Timestamp(v)));
     highValue().ifPresent(v -> columnStatsData.setHighValue(new Timestamp(v)));
     columnStatsData.setNumNulls(numNulls());
+    columnStatsData.setNumDVs(numDVs());
     columnStatsData.setBitVectors(bitVector());
     colStatsData.setTimestampStats(columnStatsData);
     return colStatsData;

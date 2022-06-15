@@ -47,6 +47,7 @@ public abstract class AbstractDecimalColumnStats extends OrderingColumnStats {
     lowValue().ifPresent(v -> columnStatsData.setLowValue(DecimalUtils.createThriftDecimal(v)));
     highValue().ifPresent(v -> columnStatsData.setHighValue(DecimalUtils.createThriftDecimal(v)));
     columnStatsData.setNumNulls(numNulls());
+    columnStatsData.setNumDVs(numDVs());
     columnStatsData.setBitVectors(bitVector());
     colStatsData.setDecimalStats(columnStatsData);
     return colStatsData;
