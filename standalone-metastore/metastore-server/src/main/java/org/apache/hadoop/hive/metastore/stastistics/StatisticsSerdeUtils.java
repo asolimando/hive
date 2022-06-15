@@ -20,6 +20,7 @@ package org.apache.hadoop.hive.metastore.stastistics;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import javolution.testing.AssertionException;
 import org.apache.hadoop.hive.metastore.api.BinaryColumnStatsData;
@@ -31,17 +32,11 @@ import org.apache.hadoop.hive.metastore.api.DoubleColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.LongColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.StringColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.TimestampColumnStatsData;
-import org.apache.hadoop.hive.metastore.stastistics.ImmutableBinaryColumnStats;
-import org.apache.hadoop.hive.metastore.stastistics.ImmutableBooleanColumnStats;
-import org.apache.hadoop.hive.metastore.stastistics.ImmutableDateColumnStats;
-import org.apache.hadoop.hive.metastore.stastistics.ImmutableDecimalColumnStats;
-import org.apache.hadoop.hive.metastore.stastistics.ImmutableDoubleColumnStats;
-import org.apache.hadoop.hive.metastore.stastistics.ImmutableLongColumnStats;
-import org.apache.hadoop.hive.metastore.stastistics.ImmutableStringColumnStats;
-import org.apache.hadoop.hive.metastore.stastistics.ImmutableTimestampColumnStats;
 
 public class StatisticsSerdeUtils {
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().registerModule(new Jdk8Module());
+  @VisibleForTesting
+  protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().registerModule(new Jdk8Module());
+
   private static final ImmutableMap<String, Class<?>> TYPE_CLASS_MAP = new ImmutableMap.Builder<String, Class<?>>()
       .put("boolean", BooleanColumnStatsData.class)
       .put("string", StringColumnStatsData.class)
@@ -60,20 +55,20 @@ public class StatisticsSerdeUtils {
       .build();
 
   private static final ImmutableMap<String, Class<?>> IMMUTABLE_TYPE_CLASS_MAP = new ImmutableMap.Builder<String, Class<?>>()
-      .put("boolean", ImmutableBooleanColumnStats.class)
-      .put("string", ImmutableStringColumnStats.class)
-      .put("varchar", ImmutableStringColumnStats.class)
-      .put("char", ImmutableStringColumnStats.class)
-      .put("binary", ImmutableBinaryColumnStats.class)
-      .put("smallint", ImmutableLongColumnStats.class)
-      .put("int", ImmutableLongColumnStats.class)
-      .put("tinyint", ImmutableLongColumnStats.class)
-      .put("bigint", ImmutableLongColumnStats.class)
-      .put("double", ImmutableDoubleColumnStats.class)
-      .put("float", ImmutableDoubleColumnStats.class)
-      .put("decimal", ImmutableDecimalColumnStats.class)
-      .put("timestamp", ImmutableTimestampColumnStats.class)
-      .put("date", ImmutableDateColumnStats.class)
+      .put("boolean", BooleanColumnStats.class)
+      .put("string", StringColumnStats.class)
+      .put("varchar", StringColumnStats.class)
+      .put("char", StringColumnStats.class)
+      .put("binary", BinaryColumnStats.class)
+      .put("smallint", LongColumnStats.class)
+      .put("int", LongColumnStats.class)
+      .put("tinyint", LongColumnStats.class)
+      .put("bigint", LongColumnStats.class)
+      .put("double", DoubleColumnStats.class)
+      .put("float", DoubleColumnStats.class)
+      .put("decimal", DecimalColumnStats.class)
+      .put("timestamp", TimestampColumnStats.class)
+      .put("date", DateColumnStats.class)
       .build();
 
   private StatisticsSerdeUtils() {
@@ -85,8 +80,7 @@ public class StatisticsSerdeUtils {
   }
 
   public static String serializeBooleanStats(Long numTrues, Long numFalses, Long numNulls) throws JsonProcessingException {
-    return OBJECT_MAPPER.writeValueAsString(
-        org.apache.hadoop.hive.metastore.stastistics.ImmutableBooleanColumnStats.builder()
+    return OBJECT_MAPPER.writeValueAsString(BooleanColumnStats.builder()
             .numTrues(numTrues)
             .numFalses(numFalses)
             .numNulls(numNulls)
@@ -95,8 +89,7 @@ public class StatisticsSerdeUtils {
 
   public static String serializeLongStats(Long numNulls, Long numNDVs, byte[] bitVector, Long lowValue, Long highValue)
       throws JsonProcessingException {
-    return OBJECT_MAPPER.writeValueAsString(
-        org.apache.hadoop.hive.metastore.stastistics.ImmutableLongColumnStats.builder()
+    return OBJECT_MAPPER.writeValueAsString(LongColumnStats.builder()
             .numNulls(numNulls)
             .numDVs(numNDVs)
             .bitVector(bitVector)
@@ -107,8 +100,7 @@ public class StatisticsSerdeUtils {
 
   public static String serializeDoubleStats(Long numNulls, Long numNDVs, byte[] bitVector, Double lowValue, Double highValue)
       throws JsonProcessingException {
-    return OBJECT_MAPPER.writeValueAsString(
-        org.apache.hadoop.hive.metastore.stastistics.ImmutableDoubleColumnStats.builder()
+    return OBJECT_MAPPER.writeValueAsString(DoubleColumnStats.builder()
             .numNulls(numNulls)
             .numDVs(numNDVs)
             .bitVector(bitVector)
@@ -119,8 +111,7 @@ public class StatisticsSerdeUtils {
 
   public static String serializeDecimalStats(Long numNulls, Long numNDVs, byte[] bitVector, String lowValue, String highValue)
       throws JsonProcessingException {
-    return OBJECT_MAPPER.writeValueAsString(
-        org.apache.hadoop.hive.metastore.stastistics.ImmutableDecimalColumnStats.builder()
+    return OBJECT_MAPPER.writeValueAsString(DecimalColumnStats.builder()
             .numNulls(numNulls)
             .numDVs(numNDVs)
             .bitVector(bitVector)
@@ -131,8 +122,7 @@ public class StatisticsSerdeUtils {
 
   public static String serializeStringStats(Long numNulls, Long numNDVs, byte[] bitVector, Long maxColLen, Double avgColLen)
       throws JsonProcessingException {
-    return OBJECT_MAPPER.writeValueAsString(
-        org.apache.hadoop.hive.metastore.stastistics.ImmutableStringColumnStats.builder()
+    return OBJECT_MAPPER.writeValueAsString(StringColumnStats.builder()
             .numNulls(numNulls)
             .numDVs(numNDVs)
             .bitVector(bitVector)
@@ -142,8 +132,7 @@ public class StatisticsSerdeUtils {
   }
 
   public static String serializeBinaryStats(Long numNulls, Long maxColLen, Double avgColLen) throws JsonProcessingException {
-    return OBJECT_MAPPER.writeValueAsString(
-        org.apache.hadoop.hive.metastore.stastistics.ImmutableBinaryColumnStats.builder()
+    return OBJECT_MAPPER.writeValueAsString(BinaryColumnStats.builder()
             .numNulls(numNulls)
             .maxColLen(maxColLen)
             .avgColLen(avgColLen)
@@ -152,8 +141,7 @@ public class StatisticsSerdeUtils {
 
   public static String serializeDateStats(Long numNulls, Long numNDVs, byte[] bitVector, Long lowValue, Long highValue)
       throws JsonProcessingException {
-    return OBJECT_MAPPER.writeValueAsString(
-        org.apache.hadoop.hive.metastore.stastistics.ImmutableDateColumnStats.builder()
+    return OBJECT_MAPPER.writeValueAsString(DateColumnStats.builder()
             .numNulls(numNulls)
             .numDVs(numNDVs)
             .bitVector(bitVector)
@@ -164,8 +152,7 @@ public class StatisticsSerdeUtils {
 
   public static String serializeTimestampStats(Long numNulls, Long numNDVs, byte[] bitVector, Long lowValue, Long highValue)
       throws JsonProcessingException {
-    return OBJECT_MAPPER.writeValueAsString(
-        org.apache.hadoop.hive.metastore.stastistics.ImmutableTimestampColumnStats.builder()
+    return OBJECT_MAPPER.writeValueAsString(TimestampColumnStats.builder()
             .numNulls(numNulls)
             .numDVs(numNDVs)
             .bitVector(bitVector)
@@ -177,5 +164,9 @@ public class StatisticsSerdeUtils {
   public static ColumnStatisticsData getColumnStatisticsData(String colType, String statistics) throws JsonProcessingException {
     return ((AbstractColumnStats) OBJECT_MAPPER.readValue(statistics, IMMUTABLE_TYPE_CLASS_MAP.get(colType)))
         .getColumnStatsData();
+  }
+
+  public static AbstractColumnStats deserializeStatistics(String colType, String statistics) throws JsonProcessingException {
+    return ((AbstractColumnStats) OBJECT_MAPPER.readValue(statistics, IMMUTABLE_TYPE_CLASS_MAP.get(colType)));
   }
 }

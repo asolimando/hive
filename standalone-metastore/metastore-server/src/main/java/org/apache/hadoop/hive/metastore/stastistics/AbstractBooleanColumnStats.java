@@ -18,13 +18,18 @@
 package org.apache.hadoop.hive.metastore.stastistics;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.hadoop.hive.metastore.api.BooleanColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData;
 import org.immutables.value.Value;
 
+@DefaultImmutableStyle
 @Value.Immutable
-public abstract class BooleanColumnStats extends AbstractColumnStats {
+@JsonDeserialize
+@JsonIgnoreProperties(ignoreUnknown = true)
+public abstract class AbstractBooleanColumnStats extends AbstractColumnStats {
 
   @JsonProperty("numTrues")
   public abstract long numTrues();

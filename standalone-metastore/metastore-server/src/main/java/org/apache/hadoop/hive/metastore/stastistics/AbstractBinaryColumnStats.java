@@ -18,11 +18,16 @@
 package org.apache.hadoop.hive.metastore.stastistics;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.hadoop.hive.metastore.api.BinaryColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData;
 import org.immutables.value.Value;
 
+@DefaultImmutableStyle
 @Value.Immutable
+@JsonDeserialize
+@JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class AbstractBinaryColumnStats extends VariableLengthColumnStats {
 
   @JsonIgnore

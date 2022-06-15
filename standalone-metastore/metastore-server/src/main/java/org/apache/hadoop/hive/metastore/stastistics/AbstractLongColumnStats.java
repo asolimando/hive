@@ -18,14 +18,19 @@
 package org.apache.hadoop.hive.metastore.stastistics;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData;
 import org.apache.hadoop.hive.metastore.api.LongColumnStatsData;
 import org.immutables.value.Value;
 
 import java.util.Optional;
 
+@DefaultImmutableStyle
 @Value.Immutable
+@JsonDeserialize
+@JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class AbstractLongColumnStats extends OrderingColumnStats {
 
   @JsonProperty("lowValue")
