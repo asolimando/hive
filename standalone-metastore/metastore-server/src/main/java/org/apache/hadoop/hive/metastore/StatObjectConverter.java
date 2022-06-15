@@ -167,7 +167,7 @@ public class StatObjectConverter {
     return mColStats;
   }
 
-  private static String getStatisticsString(ColumnStatisticsObj statsObj) throws MetaException {
+  public static String getStatisticsString(ColumnStatisticsObj statsObj) throws MetaException {
     try {
       String statistics;
       if (statsObj.getStatsData().isSetBooleanStats()) {

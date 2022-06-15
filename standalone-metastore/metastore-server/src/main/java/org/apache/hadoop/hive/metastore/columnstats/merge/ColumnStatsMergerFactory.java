@@ -22,11 +22,13 @@ package org.apache.hadoop.hive.metastore.columnstats.merge;
 import java.util.Objects;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.apache.hadoop.hive.metastore.StatObjectConverter;
 import org.apache.hadoop.hive.metastore.api.BinaryColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.BooleanColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData._Fields;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsObj;
+import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.columnstats.cache.DateColumnStatsDataInspector;
 import org.apache.hadoop.hive.metastore.columnstats.cache.DecimalColumnStatsDataInspector;
 import org.apache.hadoop.hive.metastore.columnstats.cache.DoubleColumnStatsDataInspector;
@@ -54,7 +56,7 @@ public class ColumnStatsMergerFactory {
    * @throws NullPointerException if statistics object is {@code null}
    */
   public static ColumnStatisticsObj getAggregatedStats(final ColumnStatisticsObj statsObjNew,
-      final ColumnStatisticsObj statsObjOld) throws JsonProcessingException {
+      final ColumnStatisticsObj statsObjOld) throws MetaException {
     Objects.requireNonNull(statsObjNew, "Column 1 statistics cannot be null");
     Objects.requireNonNull(statsObjOld, "Column 2 statistics cannot be null");
 
@@ -64,11 +66,17 @@ public class ColumnStatsMergerFactory {
     Preconditions.checkArgument(typeNew.equals(typeOld),
         "The column types must match: [" + typeNew + "::" + typeOld + "]");
 
-    AbstractColumnStats newStats = StatisticsSerdeUtils.deserializeStatistics(typeNew, statsObjNew.getStatistics());
-    AbstractColumnStats oldStats = StatisticsSerdeUtils.deserializeStatistics(typeNew, statsObjOld.getStatistics());
+    try {
+      AbstractColumnStats newStats = StatisticsSerdeUtils.deserializeStatistics(
+          typeNew, StatObjectConverter.getStatisticsString(statsObjNew));
+      AbstractColumnStats oldStats = StatisticsSerdeUtils.deserializeStatistics(
+          typeNew, StatObjectConverter.getStatisticsString(statsObjOld));
 
-    return new ColumnStatisticsObj(statsObjNew.getColName(), statsObjNew.getColType(),
-        statsObjNew.getStatsData(), StatisticsSerdeUtils.serializeStatistics(newStats.merge(oldStats)));
+      return new ColumnStatisticsObj(statsObjNew.getColName(), statsObjNew.getColType(),
+          statsObjNew.getStatsData(), StatisticsSerdeUtils.serializeStatistics(newStats.merge(oldStats)));
+    } catch (JsonProcessingException e) {
+      throw new MetaException("Exception while statistics' serde: " + e.getMessage());
+    }
   }
 
   public static ColumnStatisticsObj newColumnStaticsObj(final String colName, final String colType,

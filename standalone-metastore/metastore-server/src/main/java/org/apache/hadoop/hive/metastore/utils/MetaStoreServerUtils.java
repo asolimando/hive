@@ -734,11 +734,7 @@ public class MetaStoreServerUtils {
         // column stats is still accurate.
         assert statsObjNew.getColType().equals(statsObjOld.getColType());
         // If statsObjOld is found, we can merge.
-        try {
-          statsObjNew = ColumnStatsMergerFactory.getAggregatedStats(statsObjNew, statsObjOld);
-        } catch (JsonProcessingException e) {
-          throw new MetaException("Exception while merging statistics: " + e.getMessage());
-        }
+        statsObjNew = ColumnStatsMergerFactory.getAggregatedStats(statsObjNew, statsObjOld);
       }
       // If statsObjOld is not found, we just use statsObjNew as it is accurate.
       list.add(statsObjNew);
