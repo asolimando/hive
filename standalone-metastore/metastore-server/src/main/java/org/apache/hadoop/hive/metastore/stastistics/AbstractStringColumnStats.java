@@ -27,6 +27,7 @@ import org.apache.hadoop.hive.metastore.api.StringColumnStatsData;
 import org.apache.hadoop.hive.metastore.stastistics.StringColumnStats;
 import org.immutables.value.Value;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 @DefaultImmutableStyle
@@ -73,8 +74,14 @@ public abstract class AbstractStringColumnStats extends VariableLengthColumnStat
     Optional<NumDistinctValueEstimator> optEstimator = OrderingColumnStats.getMergedBitVector(this.bitVector(), o.bitVector());
     if (optEstimator.isPresent()) {
       NumDistinctValueEstimator estimator = optEstimator.get();
-      statsBuilder.bitVector(estimator.serialize());
-      statsBuilder.numDVs(estimator.estimateNumDistinctValues());
+      byte[] mergedBitVector = estimator.serialize();
+      statsBuilder.bitVector(mergedBitVector);
+      if (Arrays.equals(this.bitVector(), mergedBitVector)) {
+        // in this case the bitvectors could not be merged, do not use it to update NDVs
+        statsBuilder.numDVs(Math.max(this.numDVs(), o.numDVs()));
+      } else {
+        statsBuilder.numDVs(estimator.estimateNumDistinctValues());
+      }
     } else {
       statsBuilder.numDVs(Math.max(this.numDVs(), o.numDVs()));
     }

@@ -56,9 +56,14 @@ public class NumDistinctValueEstimatorFactory {
       NumDistinctValueEstimator n) {
     if (n instanceof FMSketch) {
       return new FMSketch(((FMSketch) n).getNumBitVectors());
-    } else {
-      return HyperLogLog.builder().setSizeOptimized().build();
     }
+    if (n instanceof HyperLogLog) {
+      HyperLogLog hll = (HyperLogLog) n;
+      return HyperLogLog.builder().setNumRegisterIndexBits(hll.getNumRegisterIndexBits())
+          .setEncoding(hll.getEncoding())
+          .build();
+    }
+    throw new IllegalArgumentException("Unknown estimator class: " + n.getClass());
   }
 
   public static NumDistinctValueEstimator getEmptyNumDistinctValueEstimator(String func,

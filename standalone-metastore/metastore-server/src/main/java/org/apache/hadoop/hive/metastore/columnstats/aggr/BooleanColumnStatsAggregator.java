@@ -42,10 +42,9 @@ public class BooleanColumnStatsAggregator extends ColumnStatsAggregator {
         if (stats == null) {
           colName = cso.getColName();
           colType = cso.getColType();
-          stats = (BooleanColumnStats) StatisticsSerdeUtils.deserializeStatistics(colType, cso.getStatistics());
+          stats = StatisticsSerdeUtils.deserializeStatistics(colType, cso.getStatistics());
         } else {
-          BooleanColumnStats newStats = (BooleanColumnStats) StatisticsSerdeUtils.deserializeStatistics(
-              colType, cso.getStatistics());
+          BooleanColumnStats newStats = StatisticsSerdeUtils.deserializeStatistics(colType, cso.getStatistics());
           stats = (BooleanColumnStats) stats.merge(newStats);
         }
       }

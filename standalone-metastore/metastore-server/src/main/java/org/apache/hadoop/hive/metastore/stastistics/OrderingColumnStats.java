@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.hadoop.hive.common.ndv.NumDistinctValueEstimator;
 import org.apache.hadoop.hive.common.ndv.NumDistinctValueEstimatorFactory;
+import org.apache.hadoop.hive.common.ndv.hll.HyperLogLog;
+import org.apache.hadoop.hive.common.ndv.hll.HyperLogLogUtils;
 import org.immutables.value.Value;
 
 import java.util.Arrays;
@@ -31,7 +33,7 @@ import java.util.stream.Stream;
 @SuppressWarnings("unused")
 public abstract class OrderingColumnStats extends AbstractColumnStats {
 
-  private static byte[] EMPTY_HLL = new byte[] {'H', 'L', 'L'};
+  private static final byte[] EMPTY_HLL = new byte[] {'H', 'L'};
 
   @JsonProperty("numDVs")
   public abstract long numDVs();
@@ -62,16 +64,35 @@ public abstract class OrderingColumnStats extends AbstractColumnStats {
   }
 
   @JsonIgnore
-  public static Optional<NumDistinctValueEstimator> getMergedBitVector(byte[] bv1, byte[] bv2) {
-    if (bv1 != null && !Arrays.equals(bv1, EMPTY_HLL) && bv2 != null && !Arrays.equals(bv2, EMPTY_HLL)) {
-      NumDistinctValueEstimator oldEst = NumDistinctValueEstimatorFactory.getNumDistinctValueEstimator(bv1);
-      NumDistinctValueEstimator newEst = NumDistinctValueEstimatorFactory.getNumDistinctValueEstimator(bv2);
-      final long ndv;
-      if (oldEst.canMerge(newEst)) {
-        oldEst.mergeEstimators(newEst);
-        return Optional.of(oldEst);
-      }
+  public static Optional<NumDistinctValueEstimator> getNDVEstimator(byte[] bv) {
+    if (bv != null && !Arrays.equals(bv, EMPTY_HLL)) {
+      return Optional.of(NumDistinctValueEstimatorFactory.getNumDistinctValueEstimator(bv));
     }
     return Optional.empty();
+  }
+
+  @JsonIgnore
+  public static Optional<NumDistinctValueEstimator> getMergedBitVector(byte[] bv1, byte[] bv2) {
+    Optional<NumDistinctValueEstimator> oldEstOptional = getNDVEstimator(bv1);
+    Optional<NumDistinctValueEstimator> newEstOptional = getNDVEstimator(bv2);
+
+    if (oldEstOptional.isPresent() && newEstOptional.isPresent()) {
+      final long ndv;
+      NumDistinctValueEstimator oldEst = oldEstOptional.get();
+      NumDistinctValueEstimator newEst = newEstOptional.get();
+      if (oldEst.canMerge(newEst)) {
+        NumDistinctValueEstimator mergedEst = NumDistinctValueEstimatorFactory.getEmptyNumDistinctValueEstimator(oldEst);
+        mergedEst.mergeEstimators(oldEst);
+        mergedEst.mergeEstimators(newEst);
+        return Optional.of(mergedEst);
+      }
+      // if they can't be merged, the current behaviour is to keep the first estimator
+      return Optional.of(oldEst);
+    }
+
+    return Stream.of(oldEstOptional, newEstOptional)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .findFirst();
   }
 }

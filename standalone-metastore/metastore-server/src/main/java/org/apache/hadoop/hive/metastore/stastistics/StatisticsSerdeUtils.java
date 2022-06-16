@@ -29,8 +29,9 @@ public class StatisticsSerdeUtils {
   @VisibleForTesting
   protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().registerModule(new Jdk8Module());
 
-  // fully qualified for class names to make IDE happy
-  private static final ImmutableMap<String, Class<?>> TYPE_CLASS_MAP = new ImmutableMap.Builder<String, Class<?>>()
+  // fully qualified class names to make the IDE happy
+  public static final ImmutableMap<String, Class<? extends AbstractColumnStats>> COL_TYPE_STATS_CLASS_MAP
+      = new ImmutableMap.Builder<String, Class<? extends AbstractColumnStats>>()
       .put("boolean", org.apache.hadoop.hive.metastore.stastistics.BooleanColumnStats.class)
       .put("string", org.apache.hadoop.hive.metastore.stastistics.StringColumnStats.class)
       .put("varchar", org.apache.hadoop.hive.metastore.stastistics.StringColumnStats.class)
@@ -56,11 +57,24 @@ public class StatisticsSerdeUtils {
   }
 
   public static ColumnStatisticsData getColumnStatisticsData(String colType, String statistics) throws JsonProcessingException {
-    return ((AbstractColumnStats) OBJECT_MAPPER.readValue(statistics, TYPE_CLASS_MAP.get(colType)))
-        .getColumnStatsData();
+    return OBJECT_MAPPER.readValue(statistics, getStatsClassFromColumnType(colType)).getColumnStatsData();
   }
 
-  public static AbstractColumnStats deserializeStatistics(String colType, String statistics) throws JsonProcessingException {
-    return ((AbstractColumnStats) OBJECT_MAPPER.readValue(statistics, TYPE_CLASS_MAP.get(colType)));
+  @SuppressWarnings("unchecked")
+  public static <T extends AbstractColumnStats> T deserializeStatistics(
+      String colType, String statistics) throws JsonProcessingException {
+    return (T) deserializeStatistics(getStatsClassFromColumnType(colType), statistics);
+  }
+
+  public static <T extends AbstractColumnStats> T deserializeStatistics(
+      Class<T> clazz, String statistics) throws JsonProcessingException {
+    return OBJECT_MAPPER.readValue(statistics, clazz);
+  }
+
+  private static Class<? extends AbstractColumnStats> getStatsClassFromColumnType(String colType) {
+    if (!COL_TYPE_STATS_CLASS_MAP.containsKey(colType)) {
+      throw new IllegalArgumentException("Unknown column type " + colType);
+    }
+    return COL_TYPE_STATS_CLASS_MAP.get(colType);
   }
 }
