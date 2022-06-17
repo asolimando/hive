@@ -21,7 +21,6 @@ package org.apache.hadoop.hive.metastore;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import javolution.testing.AssertionException;
 import org.apache.hadoop.hive.metastore.api.BinaryColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.BooleanColumnStatsData;
@@ -123,11 +122,7 @@ public class StatObjectConverter {
     statsObj.setColType(mStatsObj.getColType());
     statsObj.setColName(mStatsObj.getColName());
     String colType = mStatsObj.getColType().toLowerCase();
-    try {
-      statsObj.setStatsData(StatisticsSerdeUtils.getColumnStatisticsData(colType, mStatsObj.getStatistics()));
-    } catch (JsonProcessingException e) {
-      throw new MetaException("Exception while deserializing table column statistics object: " + e.getMessage());
-    }
+    statsObj.setStatsData(StatisticsSerdeUtils.getColumnStatisticsData(colType, mStatsObj.getStatistics()));
     return statsObj;
   }
 
@@ -168,155 +163,151 @@ public class StatObjectConverter {
   }
 
   public static String getStatisticsString(ColumnStatisticsObj statsObj) throws MetaException {
-    try {
-      if (statsObj.getStatistics() != null && !statsObj.getStatistics().isEmpty()) {
-        return statsObj.getStatistics();
+    if (statsObj.getStatistics() != null && !statsObj.getStatistics().isEmpty()) {
+      return statsObj.getStatistics();
+    }
+    if (statsObj.getStatsData().isSetBooleanStats()) {
+      BooleanColumnStatsData boolStats = statsObj.getStatsData().getBooleanStats();
+      BooleanColumnStats.Builder statsBuilder = BooleanColumnStats.builder();
+      if (boolStats.isSetNumTrues()) {
+        statsBuilder.numTrues(boolStats.getNumTrues());
       }
-      if (statsObj.getStatsData().isSetBooleanStats()) {
-        BooleanColumnStatsData boolStats = statsObj.getStatsData().getBooleanStats();
-        BooleanColumnStats.Builder statsBuilder = BooleanColumnStats.builder();
-        if (boolStats.isSetNumTrues()) {
-          statsBuilder.numTrues(boolStats.getNumTrues());
-        }
-        if (boolStats.isSetNumFalses()) {
-          statsBuilder.numFalses(boolStats.getNumFalses());
-        }
-        if (boolStats.isSetNumNulls()) {
-          statsBuilder.numNulls(boolStats.getNumNulls());
-        }
-        return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
-      } else if (statsObj.getStatsData().isSetLongStats()) {
-        LongColumnStatsData longStats = statsObj.getStatsData().getLongStats();
-        LongColumnStats.Builder statsBuilder = LongColumnStats.builder();
-        if (longStats.isSetNumNulls()) {
-          statsBuilder.numNulls(longStats.getNumNulls());
-        }
-        if (longStats.isSetNumDVs()) {
-          statsBuilder.numDVs(longStats.getNumDVs());
-        }
-        if (longStats.isSetBitVectors()) {
-          statsBuilder.bitVector(longStats.getBitVectors());
-        }
-        if (longStats.isSetLowValue()) {
-          statsBuilder.lowValue(longStats.getLowValue());
-        }
-        if (longStats.isSetHighValue()) {
-          statsBuilder.highValue(longStats.getHighValue());
-        }
-        return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
-      } else if (statsObj.getStatsData().isSetDoubleStats()) {
-        DoubleColumnStatsData doubleStats = statsObj.getStatsData().getDoubleStats();
-        DoubleColumnStats.Builder statsBuilder = DoubleColumnStats.builder();
-        if (doubleStats.isSetNumNulls()) {
-          statsBuilder.numNulls(doubleStats.getNumNulls());
-        }
-        if (doubleStats.isSetNumDVs()) {
-          statsBuilder.numDVs(doubleStats.getNumDVs());
-        }
-        if (doubleStats.isSetBitVectors()) {
-          statsBuilder.bitVector(doubleStats.getBitVectors());
-        }
-        if (doubleStats.isSetLowValue()) {
-          statsBuilder.lowValue(doubleStats.getLowValue());
-        }
-        if (doubleStats.isSetHighValue()) {
-          statsBuilder.highValue(doubleStats.getHighValue());
-        }
-        return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
-      } else if (statsObj.getStatsData().isSetDecimalStats()) {
-        DecimalColumnStatsData decimalStats = statsObj.getStatsData().getDecimalStats();
-        DecimalColumnStats.Builder statsBuilder = DecimalColumnStats.builder();
-        if (decimalStats.isSetNumNulls()) {
-          statsBuilder.numNulls(decimalStats.getNumNulls());
-        }
-        if (decimalStats.isSetNumDVs()) {
-          statsBuilder.numDVs(decimalStats.getNumDVs());
-        }
-        if (decimalStats.isSetBitVectors()) {
-          statsBuilder.bitVector(decimalStats.getBitVectors());
-        }
-        if (decimalStats.isSetLowValue()) {
-          statsBuilder.lowValue(DecimalUtils.createJdoDecimalString(decimalStats.getLowValue()));
-        }
-        if (decimalStats.isSetHighValue()) {
-          statsBuilder.highValue(DecimalUtils.createJdoDecimalString(decimalStats.getHighValue()));
-        }
-        return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
-      } else if (statsObj.getStatsData().isSetStringStats()) {
-        StringColumnStatsData stringStats = statsObj.getStatsData().getStringStats();
-        StringColumnStats.Builder statsBuilder = StringColumnStats.builder();
-        if (stringStats.isSetNumNulls()) {
-          statsBuilder.numNulls(stringStats.getNumNulls());
-        }
-        if (stringStats.isSetNumDVs()) {
-          statsBuilder.numDVs(stringStats.getNumDVs());
-        }
-        if (stringStats.isSetBitVectors()) {
-          statsBuilder.bitVector(stringStats.getBitVectors());
-        }
-        if (stringStats.isSetMaxColLen()) {
-          statsBuilder.maxColLen(stringStats.getMaxColLen());
-        }
-        if (stringStats.isSetAvgColLen()) {
-          statsBuilder.avgColLen(stringStats.getAvgColLen());
-        }
-        return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
-      } else if (statsObj.getStatsData().isSetBinaryStats()) {
-        BinaryColumnStatsData binaryStats = statsObj.getStatsData().getBinaryStats();
-        BinaryColumnStats.Builder statsBuilder = BinaryColumnStats.builder();
-        if (binaryStats.isSetNumNulls()) {
-          statsBuilder.numNulls(binaryStats.getNumNulls());
-        }
-        if (binaryStats.isSetMaxColLen()) {
-          statsBuilder.maxColLen(binaryStats.getMaxColLen());
-        }
-        if (binaryStats.isSetAvgColLen()) {
-          statsBuilder.avgColLen(binaryStats.getAvgColLen());
-        }
-        return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
-      } else if (statsObj.getStatsData().isSetDateStats()) {
-        DateColumnStatsData dateStats = statsObj.getStatsData().getDateStats();
-        DateColumnStats.Builder statsBuilder = DateColumnStats.builder();
-        if (dateStats.isSetNumNulls()) {
-          statsBuilder.numNulls(dateStats.getNumNulls());
-        }
-        if (dateStats.isSetNumDVs()) {
-          statsBuilder.numDVs(dateStats.getNumDVs());
-        }
-        if (dateStats.isSetBitVectors()) {
-          statsBuilder.bitVector(dateStats.getBitVectors());
-        }
-        if (dateStats.isSetLowValue()) {
-          statsBuilder.lowValue(dateStats.getLowValue().getDaysSinceEpoch());
-        }
-        if (dateStats.isSetHighValue()) {
-          statsBuilder.highValue(dateStats.getHighValue().getDaysSinceEpoch());
-        }
-        return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
-      } else if (statsObj.getStatsData().isSetTimestampStats()) {
-        TimestampColumnStatsData timestampStats = statsObj.getStatsData().getTimestampStats();
-        TimestampColumnStats.Builder statsBuilder = TimestampColumnStats.builder();
-        if (timestampStats.isSetNumNulls()) {
-          statsBuilder.numNulls(timestampStats.getNumNulls());
-        }
-        if (timestampStats.isSetNumDVs()) {
-          statsBuilder.numDVs(timestampStats.getNumDVs());
-        }
-        if (timestampStats.isSetBitVectors()) {
-          statsBuilder.bitVector(timestampStats.getBitVectors());
-        }
-        if (timestampStats.isSetLowValue()) {
-          statsBuilder.lowValue(timestampStats.getLowValue().getSecondsSinceEpoch());
-        }
-        if (timestampStats.isSetHighValue()) {
-          statsBuilder.highValue(timestampStats.getHighValue().getSecondsSinceEpoch());
-        }
-        return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
-      } else {
-        throw new IllegalArgumentException("Unrecognized statistics object's type");
+      if (boolStats.isSetNumFalses()) {
+        statsBuilder.numFalses(boolStats.getNumFalses());
       }
-    } catch (JsonProcessingException e) {
-      throw new MetaException("Exception while serializing table partition column statistics:" + e.getMessage());
+      if (boolStats.isSetNumNulls()) {
+        statsBuilder.numNulls(boolStats.getNumNulls());
+      }
+      return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
+    } else if (statsObj.getStatsData().isSetLongStats()) {
+      LongColumnStatsData longStats = statsObj.getStatsData().getLongStats();
+      LongColumnStats.Builder statsBuilder = LongColumnStats.builder();
+      if (longStats.isSetNumNulls()) {
+        statsBuilder.numNulls(longStats.getNumNulls());
+      }
+      if (longStats.isSetNumDVs()) {
+        statsBuilder.numDVs(longStats.getNumDVs());
+      }
+      if (longStats.isSetBitVectors()) {
+        statsBuilder.bitVector(longStats.getBitVectors());
+      }
+      if (longStats.isSetLowValue()) {
+        statsBuilder.lowValue(longStats.getLowValue());
+      }
+      if (longStats.isSetHighValue()) {
+        statsBuilder.highValue(longStats.getHighValue());
+      }
+      return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
+    } else if (statsObj.getStatsData().isSetDoubleStats()) {
+      DoubleColumnStatsData doubleStats = statsObj.getStatsData().getDoubleStats();
+      DoubleColumnStats.Builder statsBuilder = DoubleColumnStats.builder();
+      if (doubleStats.isSetNumNulls()) {
+        statsBuilder.numNulls(doubleStats.getNumNulls());
+      }
+      if (doubleStats.isSetNumDVs()) {
+        statsBuilder.numDVs(doubleStats.getNumDVs());
+      }
+      if (doubleStats.isSetBitVectors()) {
+        statsBuilder.bitVector(doubleStats.getBitVectors());
+      }
+      if (doubleStats.isSetLowValue()) {
+        statsBuilder.lowValue(doubleStats.getLowValue());
+      }
+      if (doubleStats.isSetHighValue()) {
+        statsBuilder.highValue(doubleStats.getHighValue());
+      }
+      return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
+    } else if (statsObj.getStatsData().isSetDecimalStats()) {
+      DecimalColumnStatsData decimalStats = statsObj.getStatsData().getDecimalStats();
+      DecimalColumnStats.Builder statsBuilder = DecimalColumnStats.builder();
+      if (decimalStats.isSetNumNulls()) {
+        statsBuilder.numNulls(decimalStats.getNumNulls());
+      }
+      if (decimalStats.isSetNumDVs()) {
+        statsBuilder.numDVs(decimalStats.getNumDVs());
+      }
+      if (decimalStats.isSetBitVectors()) {
+        statsBuilder.bitVector(decimalStats.getBitVectors());
+      }
+      if (decimalStats.isSetLowValue()) {
+        statsBuilder.lowValue(DecimalUtils.createJdoDecimalString(decimalStats.getLowValue()));
+      }
+      if (decimalStats.isSetHighValue()) {
+        statsBuilder.highValue(DecimalUtils.createJdoDecimalString(decimalStats.getHighValue()));
+      }
+      return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
+    } else if (statsObj.getStatsData().isSetStringStats()) {
+      StringColumnStatsData stringStats = statsObj.getStatsData().getStringStats();
+      StringColumnStats.Builder statsBuilder = StringColumnStats.builder();
+      if (stringStats.isSetNumNulls()) {
+        statsBuilder.numNulls(stringStats.getNumNulls());
+      }
+      if (stringStats.isSetNumDVs()) {
+        statsBuilder.numDVs(stringStats.getNumDVs());
+      }
+      if (stringStats.isSetBitVectors()) {
+        statsBuilder.bitVector(stringStats.getBitVectors());
+      }
+      if (stringStats.isSetMaxColLen()) {
+        statsBuilder.maxColLen(stringStats.getMaxColLen());
+      }
+      if (stringStats.isSetAvgColLen()) {
+        statsBuilder.avgColLen(stringStats.getAvgColLen());
+      }
+      return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
+    } else if (statsObj.getStatsData().isSetBinaryStats()) {
+      BinaryColumnStatsData binaryStats = statsObj.getStatsData().getBinaryStats();
+      BinaryColumnStats.Builder statsBuilder = BinaryColumnStats.builder();
+      if (binaryStats.isSetNumNulls()) {
+        statsBuilder.numNulls(binaryStats.getNumNulls());
+      }
+      if (binaryStats.isSetMaxColLen()) {
+        statsBuilder.maxColLen(binaryStats.getMaxColLen());
+      }
+      if (binaryStats.isSetAvgColLen()) {
+        statsBuilder.avgColLen(binaryStats.getAvgColLen());
+      }
+      return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
+    } else if (statsObj.getStatsData().isSetDateStats()) {
+      DateColumnStatsData dateStats = statsObj.getStatsData().getDateStats();
+      DateColumnStats.Builder statsBuilder = DateColumnStats.builder();
+      if (dateStats.isSetNumNulls()) {
+        statsBuilder.numNulls(dateStats.getNumNulls());
+      }
+      if (dateStats.isSetNumDVs()) {
+        statsBuilder.numDVs(dateStats.getNumDVs());
+      }
+      if (dateStats.isSetBitVectors()) {
+        statsBuilder.bitVector(dateStats.getBitVectors());
+      }
+      if (dateStats.isSetLowValue()) {
+        statsBuilder.lowValue(dateStats.getLowValue().getDaysSinceEpoch());
+      }
+      if (dateStats.isSetHighValue()) {
+        statsBuilder.highValue(dateStats.getHighValue().getDaysSinceEpoch());
+      }
+      return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
+    } else if (statsObj.getStatsData().isSetTimestampStats()) {
+      TimestampColumnStatsData timestampStats = statsObj.getStatsData().getTimestampStats();
+      TimestampColumnStats.Builder statsBuilder = TimestampColumnStats.builder();
+      if (timestampStats.isSetNumNulls()) {
+        statsBuilder.numNulls(timestampStats.getNumNulls());
+      }
+      if (timestampStats.isSetNumDVs()) {
+        statsBuilder.numDVs(timestampStats.getNumDVs());
+      }
+      if (timestampStats.isSetBitVectors()) {
+        statsBuilder.bitVector(timestampStats.getBitVectors());
+      }
+      if (timestampStats.isSetLowValue()) {
+        statsBuilder.lowValue(timestampStats.getLowValue().getSecondsSinceEpoch());
+      }
+      if (timestampStats.isSetHighValue()) {
+        statsBuilder.highValue(timestampStats.getHighValue().getSecondsSinceEpoch());
+      }
+      return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
+    } else {
+      throw new IllegalArgumentException("Unrecognized statistics object's type");
     }
   }
 
@@ -325,11 +316,7 @@ public class StatObjectConverter {
     statsObj.setColType(mStatsObj.getColType());
     statsObj.setColName(mStatsObj.getColName());
     String colType = mStatsObj.getColType().toLowerCase();
-    try {
-      statsObj.setStatsData(StatisticsSerdeUtils.getColumnStatisticsData(colType, mStatsObj.getStatistics()));
-    } catch (JsonProcessingException e) {
-      throw new MetaException("Exception while deserializing table column statistics object: " + e.getMessage());
-    }
+    statsObj.setStatsData(StatisticsSerdeUtils.getColumnStatisticsData(colType, mStatsObj.getStatistics()));
     return statsObj;
   }
 
@@ -362,80 +349,76 @@ public class StatObjectConverter {
     colType = colType.toLowerCase();
     String statistics;
 
-    try {
-      if (colType.equals("boolean")) {
-        statistics = StatisticsSerdeUtils.serializeStatistics(
-            BooleanColumnStats.builder()
-                .numTrues((Long) numTrues)
-                .numFalses((Long) numFalses)
-                .numNulls((Long) numNulls)
-                .build());
-      } else if (colType.equals("string") || colType.startsWith("varchar") || colType.startsWith("char")) {
-        statistics = StatisticsSerdeUtils.serializeStatistics(
-            StringColumnStats.builder()
-                .numNulls((Long) numNulls)
-                .numDVs((Long) numDVs)
-                .bitVector((byte[]) bitVector)
-                .maxColLen((Long) maxColLen)
-                .avgColLen((Double) avgColLen)
-                .build());
-      } else if (colType.equals("binary")) {
-        statistics = StatisticsSerdeUtils.serializeStatistics(
-            BinaryColumnStats.builder()
-                .numNulls((Long) numNulls)
-                .maxColLen((Long) maxColLen)
-                .avgColLen((Double) avgColLen)
-                .build());
-      } else if (colType.equals("bigint") || colType.equals("int") || colType.equals("smallint") || colType.equals("tinyint")) {
-        statistics = StatisticsSerdeUtils.serializeStatistics(
-            LongColumnStats.builder()
-                .numNulls((Long) numNulls)
-                .numDVs((Long) numDVs)
-                .bitVector((byte[]) bitVector)
-                .lowValue((Long) longLowValue)
-                .highValue((Long) longHighValue)
-                .build());
-      } else if (colType.equals("double") || colType.equals("float")) {
-        statistics = StatisticsSerdeUtils.serializeStatistics(
-            DoubleColumnStats.builder()
-                .numNulls((Long) numNulls)
-                .numDVs((Long) numDVs)
-                .bitVector((byte[]) bitVector)
-                .lowValue((Double) doubleLowValue)
-                .highValue((Double) doubleHighValue)
-                .build());
-      } else if (colType.startsWith("decimal")) {
-        statistics = StatisticsSerdeUtils.serializeStatistics(
-            DecimalColumnStats.builder()
-                .numNulls((Long) numNulls)
-                .numDVs((Long) numDVs)
-                .bitVector((byte[]) bitVector)
-                .lowValue((String) decimalLowValue)
-                .highValue((String) decimalHighValue)
-                .build());
-      } else if (colType.equals("date")) {
-        statistics = StatisticsSerdeUtils.serializeStatistics(
-            DateColumnStats.builder()
-                .numNulls((Long) numNulls)
-                .numDVs((Long) numDVs)
-                .bitVector((byte[]) bitVector)
-                .lowValue((Long) longLowValue)
-                .highValue((Long) longHighValue)
-                .build());
-      } else if (colType.equals("timestamp")) {
-        statistics = StatisticsSerdeUtils.serializeStatistics(
-            TimestampColumnStats.builder()
-                .numNulls((Long) numNulls)
-                .numDVs((Long) numDVs)
-                .bitVector((byte[]) bitVector)
-                .lowValue((Long) longLowValue)
-                .highValue((Long) longHighValue)
-                .build());
-      } else {
-        throw new MetaException("Unknown column type " + colType);
-      }
-    } catch (JsonProcessingException e) {
-      throw new MetaException("Exception while serializing column statistics: " + e.getMessage());
+    if (colType.equals("boolean")) {
+      statistics = StatisticsSerdeUtils.serializeStatistics(
+          BooleanColumnStats.builder()
+              .numTrues((Long) numTrues)
+              .numFalses((Long) numFalses)
+              .numNulls((Long) numNulls)
+              .build());
+    } else if (colType.equals("string") || colType.startsWith("varchar") || colType.startsWith("char")) {
+      statistics = StatisticsSerdeUtils.serializeStatistics(
+          StringColumnStats.builder()
+              .numNulls((Long) numNulls)
+              .numDVs((Long) numDVs)
+              .bitVector((byte[]) bitVector)
+              .maxColLen((Long) maxColLen)
+              .avgColLen((Double) avgColLen)
+              .build());
+    } else if (colType.equals("binary")) {
+      statistics = StatisticsSerdeUtils.serializeStatistics(
+          BinaryColumnStats.builder()
+              .numNulls((Long) numNulls)
+              .maxColLen((Long) maxColLen)
+              .avgColLen((Double) avgColLen)
+              .build());
+    } else if (colType.equals("bigint") || colType.equals("int") || colType.equals("smallint") || colType.equals("tinyint")) {
+      statistics = StatisticsSerdeUtils.serializeStatistics(
+          LongColumnStats.builder()
+              .numNulls((Long) numNulls)
+              .numDVs((Long) numDVs)
+              .bitVector((byte[]) bitVector)
+              .lowValue((Long) longLowValue)
+              .highValue((Long) longHighValue)
+              .build());
+    } else if (colType.equals("double") || colType.equals("float")) {
+      statistics = StatisticsSerdeUtils.serializeStatistics(
+          DoubleColumnStats.builder()
+              .numNulls((Long) numNulls)
+              .numDVs((Long) numDVs)
+              .bitVector((byte[]) bitVector)
+              .lowValue((Double) doubleLowValue)
+              .highValue((Double) doubleHighValue)
+              .build());
+    } else if (colType.startsWith("decimal")) {
+      statistics = StatisticsSerdeUtils.serializeStatistics(
+          DecimalColumnStats.builder()
+              .numNulls((Long) numNulls)
+              .numDVs((Long) numDVs)
+              .bitVector((byte[]) bitVector)
+              .lowValue((String) decimalLowValue)
+              .highValue((String) decimalHighValue)
+              .build());
+    } else if (colType.equals("date")) {
+      statistics = StatisticsSerdeUtils.serializeStatistics(
+          DateColumnStats.builder()
+              .numNulls((Long) numNulls)
+              .numDVs((Long) numDVs)
+              .bitVector((byte[]) bitVector)
+              .lowValue((Long) longLowValue)
+              .highValue((Long) longHighValue)
+              .build());
+    } else if (colType.equals("timestamp")) {
+      statistics = StatisticsSerdeUtils.serializeStatistics(
+          TimestampColumnStats.builder()
+              .numNulls((Long) numNulls)
+              .numDVs((Long) numDVs)
+              .bitVector((byte[]) bitVector)
+              .lowValue((Long) longLowValue)
+              .highValue((Long) longHighValue)
+              .build());
+    } else {
+      throw new MetaException("Unknown column type " + colType);
     }
 
     return statistics;

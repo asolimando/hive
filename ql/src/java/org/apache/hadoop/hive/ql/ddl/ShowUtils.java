@@ -37,6 +37,7 @@ import org.apache.hadoop.hive.metastore.api.DecimalColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.DoubleColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.LongColumnStatsData;
+import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.StringColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.TimestampColumnStatsData;
 import org.apache.hadoop.hive.metastore.stastistics.StatisticsSerdeUtils;
@@ -134,8 +135,8 @@ public final class ShowUtils {
   }
 
 
-  public static String[] extractColumnValues(FieldSchema column, boolean isColumnStatsAvailable,
-      ColumnStatisticsObj columnStatisticsObj) throws JsonProcessingException {
+  public static String[] extractColumnValues(
+      FieldSchema column, boolean isColumnStatsAvailable, ColumnStatisticsObj columnStatisticsObj) {
     List<String> values = new ArrayList<>();
     values.add(column.getName());
     values.add(column.getType());

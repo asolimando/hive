@@ -17,7 +17,6 @@
  */
 package org.apache.hadoop.hive.metastore.statistics;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.hadoop.hive.common.ndv.hll.HyperLogLog;
 import org.apache.hadoop.hive.metastore.annotation.MetastoreUnitTest;
 import org.apache.hadoop.hive.metastore.stastistics.DoubleColumnStats;
@@ -53,23 +52,23 @@ public class TestStatisticsSerde {
   private static final String DOUBLE_STATS_JSON_PARTIAL = "{\"numNulls\":0,\"numDVs\":1}";
 
   @Test
-  public void testDoubleSerialization() throws JsonProcessingException {
+  public void testDoubleSerialization() {
     Assert.assertEquals(DOUBLE_STATS_JSON, StatisticsSerdeUtils.serializeStatistics(DOUBLE_STATS));
   }
 
   @Test
-  public void testDoubleDeserialization() throws JsonProcessingException {
+  public void testDoubleDeserialization() {
     Assert.assertEquals(DOUBLE_STATS, StatisticsSerdeUtils.deserializeStatistics("double", DOUBLE_STATS_JSON));
   }
 
   @Test
-  public void testDoubleDeserializationUnknownPropertyOK() throws JsonProcessingException {
+  public void testDoubleDeserializationUnknownPropertyOK() {
     Assert.assertEquals(
         DOUBLE_STATS, StatisticsSerdeUtils.deserializeStatistics("double", DOUBLE_STATS_JSON_UNKNOWN_PROPERTY));
   }
 
   @Test
-  public void testDoubleDeserializationPartialOK() throws JsonProcessingException {
+  public void testDoubleDeserializationPartialOK() {
     Assert.assertEquals(
         DOUBLE_STATS_PARTIAL, StatisticsSerdeUtils.deserializeStatistics("double", DOUBLE_STATS_JSON_PARTIAL));
   }

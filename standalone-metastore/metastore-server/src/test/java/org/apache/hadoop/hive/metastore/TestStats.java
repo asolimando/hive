@@ -17,7 +17,6 @@
  */
 package org.apache.hadoop.hive.metastore;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.annotation.MetastoreCheckinTest;
 import org.apache.hadoop.hive.metastore.api.AggrStats;
@@ -125,7 +124,7 @@ public class TestStats {
 
   private List<String> createMetadata(String catName, String dbName, String tableName,
                                       String partKey, List<String> partVals,
-                                      Map<String, Column> colMap) throws TException, JsonProcessingException {
+                                      Map<String, Column> colMap) throws TException {
     if (!DEFAULT_CATALOG_NAME.equals(catName) && !NO_CAT.equals(catName)) {
       Catalog cat = new CatalogBuilder()
           .setName(catName)
@@ -186,7 +185,7 @@ public class TestStats {
 
   private ColumnStatistics buildStatsForOneTableOrPartition(String catName, String dbName,
                                                             String tableName, String partName,
-                                                            Collection<Column> cols) throws JsonProcessingException {
+                                                            Collection<Column> cols) {
     ColumnStatisticsDesc desc = new ColumnStatisticsDesc(partName == null, dbName, tableName);
     if (!NO_CAT.equals(catName)) desc.setCatName(catName);
     if (partName != null) desc.setPartName(partName);
@@ -277,7 +276,7 @@ public class TestStats {
   }
 
   @Test
-  public void tableInHiveCatalog() throws TException, JsonProcessingException {
+  public void tableInHiveCatalog() throws TException {
     String dbName = "db_table_stats";
     String tableName = "table_in_default_db_stats";
     Map<String, Column> colMap = buildAllColumns();
@@ -288,7 +287,7 @@ public class TestStats {
 
   @Ignore("HIVE-19509: Disable tests that are failing continuously")
   @Test
-  public void partitionedTableInHiveCatalog() throws TException, JsonProcessingException {
+  public void partitionedTableInHiveCatalog() throws TException {
     String dbName = "db_part_stats";
     String tableName = "partitioned_table_in_default_db_stats";
     Map<String, Column> colMap = buildAllColumns();
@@ -301,7 +300,7 @@ public class TestStats {
   }
 
   @Test
-  public void tableOtherCatalog() throws TException, JsonProcessingException {
+  public void tableOtherCatalog() throws TException {
     String catName = "cat_table_stats";
     String dbName = "other_cat_db_table_stats";
     String tableName = "table_in_default_db_stats";
@@ -313,7 +312,7 @@ public class TestStats {
 
   @Ignore("HIVE-19509: Disable tests that are failing continuously")
   @Test
-  public void partitionedTableOtherCatalog() throws TException, JsonProcessingException {
+  public void partitionedTableOtherCatalog() throws TException {
     String catName = "cat_table_stats";
     String dbName = "other_cat_db_part_stats";
     String tableName = "partitioned_table_in_default_db_stats";
@@ -327,7 +326,7 @@ public class TestStats {
   }
 
   @Test
-  public void tableDeprecatedCalls() throws TException, JsonProcessingException {
+  public void tableDeprecatedCalls() throws TException {
     String dbName = "old_db_table_stats";
     String tableName = "table_in_default_db_stats";
     Map<String, Column> colMap = buildAllColumns();
@@ -338,7 +337,7 @@ public class TestStats {
 
   @Ignore("HIVE-19509: Disable tests that are failing continuously")
   @Test
-  public void partitionedTableDeprecatedCalls() throws TException, JsonProcessingException {
+  public void partitionedTableDeprecatedCalls() throws TException {
     String dbName = "old_db_part_stats";
     String tableName = "partitioned_table_in_default_db_stats";
     Map<String, Column> colMap = buildAllColumns();
@@ -369,7 +368,7 @@ public class TestStats {
       numDvs = new ArrayList<>();
     }
 
-    abstract ColumnStatisticsObj generate() throws JsonProcessingException;
+    abstract ColumnStatisticsObj generate();
     abstract void compare(ColumnStatisticsData colstats, int offset);
 
     void compare(ColumnStatisticsObj obj, int offset) {
@@ -467,7 +466,7 @@ public class TestStats {
     }
 
     @Override
-    ColumnStatisticsObj generate() throws JsonProcessingException {
+    ColumnStatisticsObj generate() {
       String serializedStats = StatisticsSerdeUtils.serializeStatistics(
           BinaryColumnStats.builder()
           .maxColLen(genMaxLen())
@@ -505,7 +504,7 @@ public class TestStats {
     }
 
     @Override
-    ColumnStatisticsObj generate() throws JsonProcessingException {
+    ColumnStatisticsObj generate() {
       String serializedStats = StatisticsSerdeUtils.serializeStatistics(
           BooleanColumnStats.builder()
               .numTrues(getNumTrues())
@@ -558,7 +557,7 @@ public class TestStats {
     }
 
     @Override
-    ColumnStatisticsObj generate() throws JsonProcessingException {
+    ColumnStatisticsObj generate() {
       String serializedStats = StatisticsSerdeUtils.serializeStatistics(DateColumnStats.builder()
           .numNulls(getNumNulls())
           .numDVs(getNumDvs())
@@ -619,7 +618,7 @@ public class TestStats {
     }
 
     @Override
-    ColumnStatisticsObj generate() throws JsonProcessingException {
+    ColumnStatisticsObj generate() {
       String serializedStats = StatisticsSerdeUtils.serializeStatistics(DoubleColumnStats.builder()
           .numNulls(genNumNulls())
           .numDVs(genNumDvs())
@@ -683,7 +682,7 @@ public class TestStats {
     }
 
     @Override
-    ColumnStatisticsObj generate() throws JsonProcessingException {
+    ColumnStatisticsObj generate() {
       String serializedStats = StatisticsSerdeUtils.serializeStatistics(LongColumnStats.builder()
           .numNulls(genNumNulls())
           .numDVs(getNumDvs())
@@ -742,7 +741,7 @@ public class TestStats {
     }
 
     @Override
-    ColumnStatisticsObj generate() throws JsonProcessingException {
+    ColumnStatisticsObj generate() {
       String serializedStats = StatisticsSerdeUtils.serializeStatistics(StringColumnStats.builder()
           .maxColLen(getMaxLen())
           .avgColLen(genAvgLens())

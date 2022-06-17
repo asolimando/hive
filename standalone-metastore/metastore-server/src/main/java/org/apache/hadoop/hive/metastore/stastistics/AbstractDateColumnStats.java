@@ -19,7 +19,6 @@ package org.apache.hadoop.hive.metastore.stastistics;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import org.apache.hadoop.hive.common.ndv.NumDistinctValueEstimator;

@@ -84,7 +84,6 @@ public class StatisticsTestUtils {
       throw new IllegalArgumentException("indexes list length can't be greater than the stats list length, found "
           + indexes.size() + " and " + stats.size() + ", respectively");
     }
-
     return indexes.stream()
         .map(i -> new ColStatsObjWithSourceInfo(stats.get(i).getStatsObj().get(0),
             DEFAULT_CATALOG_NAME, table.getDbName(), table.getTableName(), partitionNames.get(i)))

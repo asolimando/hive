@@ -18,7 +18,6 @@
  */
 package org.apache.hadoop.hive.metastore.columnstats.aggr;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.hadoop.hive.common.ndv.fm.FMSketch;
 import org.apache.hadoop.hive.common.ndv.hll.HyperLogLog;
 import org.apache.hadoop.hive.metastore.StatisticsTestUtils;
@@ -60,7 +59,7 @@ public class StringColumnStatsAggregatorTest {
   private static final String S_7 = "yet another string";
 
   @Test
-  public void testAggregateSingleStat() throws MetaException, JsonProcessingException {
+  public void testAggregateSingleStat() throws MetaException {
     List<String> partitionNames = Collections.singletonList("part1");
 
     ColumnStats stats = StringColumnStats.builder()
@@ -87,7 +86,7 @@ public class StringColumnStatsAggregatorTest {
   }
 
   @Test
-  public void testAggregateMultiStatsWhenAllAvailable() throws MetaException, JsonProcessingException {
+  public void testAggregateMultiStatsWhenAllAvailable() throws MetaException {
     List<String> partitionNames = Arrays.asList("part1", "part2", "part3");
 
     ColumnStats s1 = StringColumnStats.builder()
@@ -143,7 +142,7 @@ public class StringColumnStatsAggregatorTest {
   }
 
   @Test
-  public void testAggregateMultiStatsWhenUnmergeableBitVectors() throws MetaException, JsonProcessingException {
+  public void testAggregateMultiStatsWhenUnmergeableBitVectors() throws MetaException {
     List<String> partitionNames = Arrays.asList("part1", "part2", "part3");
 
     FMSketch fmSketch1 = StatisticsTestUtils.createFMSketch(S_1, S_2, S_3);
@@ -227,7 +226,7 @@ public class StringColumnStatsAggregatorTest {
   }
 
   @Test
-  public void testAggregateMultiStatsWhenOnlySomeAvailable() throws MetaException, JsonProcessingException {
+  public void testAggregateMultiStatsWhenOnlySomeAvailable() throws MetaException {
     List<String> partitionNames = Arrays.asList("part1", "part2", "part3", "part4");
 
     ColumnStats s1 = StringColumnStats.builder()
@@ -281,8 +280,7 @@ public class StringColumnStatsAggregatorTest {
   }
 
   @Test
-  public void testAggregateMultiStatsOnlySomeAvailableButUnmergeableBitVector()
-      throws MetaException, JsonProcessingException {
+  public void testAggregateMultiStatsOnlySomeAvailableButUnmergeableBitVector() throws MetaException {
     List<String> partitionNames = Arrays.asList("part1", "part2", "part3");
 
     ColumnStats s1 = StringColumnStats.builder()

@@ -21,7 +21,6 @@ package org.apache.hadoop.hive.metastore.columnstats.merge;
 
 import java.util.Objects;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.hadoop.hive.metastore.StatObjectConverter;
 import org.apache.hadoop.hive.metastore.api.BinaryColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.BooleanColumnStatsData;
@@ -66,17 +65,13 @@ public class ColumnStatsMergerFactory {
     Preconditions.checkArgument(typeNew.equals(typeOld),
         "The column types must match: [" + typeNew + "::" + typeOld + "]");
 
-    try {
-      ColumnStats newStats = StatisticsSerdeUtils.deserializeStatistics(
-          typeNew, StatObjectConverter.getStatisticsString(statsObjNew));
-      ColumnStats oldStats = StatisticsSerdeUtils.deserializeStatistics(
-          typeNew, StatObjectConverter.getStatisticsString(statsObjOld));
+    ColumnStats newStats = StatisticsSerdeUtils.deserializeStatistics(
+        typeNew, StatObjectConverter.getStatisticsString(statsObjNew));
+    ColumnStats oldStats = StatisticsSerdeUtils.deserializeStatistics(
+        typeNew, StatObjectConverter.getStatisticsString(statsObjOld));
 
-      return new ColumnStatisticsObj(statsObjNew.getColName(), statsObjNew.getColType(),
-          statsObjNew.getStatsData(), StatisticsSerdeUtils.serializeStatistics(newStats.merge(oldStats)));
-    } catch (JsonProcessingException e) {
-      throw new MetaException("Exception while statistics' serde: " + e.getMessage());
-    }
+    return new ColumnStatisticsObj(statsObjNew.getColName(), statsObjNew.getColType(),
+        statsObjNew.getStatsData(), StatisticsSerdeUtils.serializeStatistics(newStats.merge(oldStats)));
   }
 
   public static ColumnStatisticsObj newColumnStaticsObj(final String colName, final String colType,

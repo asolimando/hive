@@ -52,23 +52,34 @@ public class StatisticsSerdeUtils {
     throw new AssertionException("StatisticsSerdeUtils util class should not be instantiated");
   }
 
-  public static String serializeStatistics(ColumnStats stats) throws JsonProcessingException {
-    return OBJECT_MAPPER.writeValueAsString(stats);
+  public static String serializeStatistics(ColumnStats stats) {
+    try {
+      return OBJECT_MAPPER.writeValueAsString(stats);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("Exception while serializing stats: " + e.getMessage());
+    }
   }
 
-  public static ColumnStatisticsData getColumnStatisticsData(String colType, String statistics) throws JsonProcessingException {
-    return OBJECT_MAPPER.readValue(statistics, getStatsClassFromColumnType(colType)).getColumnStatsData();
+  public static ColumnStatisticsData getColumnStatisticsData(String colType, String statistics) {
+    try {
+      return OBJECT_MAPPER.readValue(statistics, getStatsClassFromColumnType(colType)).getColumnStatsData();
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("Exception while converting column statistics to old format: " + e.getMessage());
+    }
   }
 
   @SuppressWarnings("unchecked")
   public static <T extends ColumnStats> T deserializeStatistics(
-      String colType, String statistics) throws JsonProcessingException {
+      String colType, String statistics) {
     return (T) deserializeStatistics(getStatsClassFromColumnType(colType), statistics);
   }
 
-  public static <T extends ColumnStats> T deserializeStatistics(
-      Class<T> clazz, String statistics) throws JsonProcessingException {
-    return OBJECT_MAPPER.readValue(statistics, clazz);
+  public static <T extends ColumnStats> T deserializeStatistics(Class<T> clazz, String statistics) {
+    try {
+      return OBJECT_MAPPER.readValue(statistics, clazz);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("Exception while deserializing stats: " + e.getMessage());
+    }
   }
 
   private static Class<? extends ColumnStats> getStatsClassFromColumnType(String colType) {

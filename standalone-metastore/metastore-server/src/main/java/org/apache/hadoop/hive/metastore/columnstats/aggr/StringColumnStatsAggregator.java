@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.hadoop.hive.common.ndv.NumDistinctValueEstimator;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsObj;
@@ -36,7 +35,6 @@ import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.StringColumnStatsData;
 import org.apache.hadoop.hive.metastore.columnstats.cache.StringColumnStatsDataInspector;
 import org.apache.hadoop.hive.metastore.stastistics.ColumnStats;
-import org.apache.hadoop.hive.metastore.stastistics.OrderingColumnStats;
 import org.apache.hadoop.hive.metastore.stastistics.StatisticsSerdeUtils;
 import org.apache.hadoop.hive.metastore.stastistics.StringColumnStats;
 import org.apache.hadoop.hive.metastore.utils.MetaStoreServerUtils.ColStatsObjWithSourceInfo;
@@ -56,104 +54,98 @@ public class StringColumnStatsAggregator extends ColumnStatsAggregator implement
     String colName = null;
     boolean doAllPartitionContainStats = partNames.size() == colStatsWithSourceInfo.size();
     boolean areAllEstimatorsMergeable = true;
-    try {
-      for (ColStatsObjWithSourceInfo csp : colStatsWithSourceInfo) {
-        ColumnStatisticsObj cso = csp.getColStatsObj();
-        if (stats == null) {
-          colName = cso.getColName();
-          colType = cso.getColType();
-          stats = StatisticsSerdeUtils.deserializeStatistics(colType, cso.getStatistics());
-          LOG.trace("doAllPartitionContainStats for column: {} is: {}", colName, doAllPartitionContainStats);
-        } else {
-          StringColumnStats newStats = StatisticsSerdeUtils.deserializeStatistics(colType, cso.getStatistics());
-          StringColumnStats mergedStats = (StringColumnStats) stats.merge(newStats);
-          if (Arrays.equals(stats.bitVector(), mergedStats.bitVector())) {
-            areAllEstimatorsMergeable = false;
-          }
-          stats = mergedStats;
+    for (ColStatsObjWithSourceInfo csp : colStatsWithSourceInfo) {
+      ColumnStatisticsObj cso = csp.getColStatsObj();
+      if (stats == null) {
+        colName = cso.getColName();
+        colType = cso.getColType();
+        stats = csp.getStats();
+        LOG.trace("doAllPartitionContainStats for column: {} is: {}", colName, doAllPartitionContainStats);
+      } else {
+        StringColumnStats newStats = csp.getStats();
+        StringColumnStats mergedStats = (StringColumnStats) stats.merge(newStats);
+        if (Arrays.equals(stats.bitVector(), mergedStats.bitVector())) {
+          areAllEstimatorsMergeable = false;
         }
+        stats = mergedStats;
       }
-      LOG.debug("all of the bit vectors can merge for {} is {}", colName, areAllEstimatorsMergeable);
-      if (!doAllPartitionContainStats && colStatsWithSourceInfo.size() >= 2) {
-        LOG.debug("start extrapolation for {}", colName);
-
-        Map<String, Integer> indexMap = new HashMap<>();
-        for (int index = 0; index < partNames.size(); index++) {
-          indexMap.put(partNames.get(index), index);
-        }
-        Map<String, Double> adjustedIndexMap = new HashMap<>();
-        Map<String, ColumnStats> adjustedStatsMap = new HashMap<>();
-        if (!areAllEstimatorsMergeable) {
-          // if not every partition uses bitvector for ndv, we just fall back to the traditional extrapolation methods
-          for (ColStatsObjWithSourceInfo csp : colStatsWithSourceInfo) {
-            ColumnStatisticsObj cso = csp.getColStatsObj();
-            String partName = csp.getPartName();
-            adjustedIndexMap.put(partName, (double) indexMap.get(partName));
-            adjustedStatsMap.put(partName, StatisticsSerdeUtils.deserializeStatistics(colType, cso.getStatistics()));
-          }
-        } else {
-          // we first merge all the adjacent bitvectors that we could merge and derive new partition names and index
-          StringBuilder pseudoPartName = new StringBuilder();
-          double pseudoIndexSum = 0;
-          int length = 0;
-          int currIndex = -1;
-          StringColumnStats aggregateData = null;
-          for (ColStatsObjWithSourceInfo csp : colStatsWithSourceInfo) {
-            ColumnStatisticsObj cso = csp.getColStatsObj();
-            String partName = csp.getPartName();
-            StringColumnStats newData = StatisticsSerdeUtils.deserializeStatistics(colType, cso.getStatistics());
-            // newData.isSetBitVectors() should be true for sure because we already checked it before
-            if (indexMap.get(partName) != currIndex) {
-              // There is bitvector, but it is not adjacent to the previous ones.
-              if (length > 0) {
-                // we have to set ndv
-                adjustedIndexMap.put(pseudoPartName.toString(), pseudoIndexSum / length);
-                Optional<NumDistinctValueEstimator> estimator = aggregateData.getNDVEstimator();
-                if (estimator.isPresent()) {
-                  aggregateData = StringColumnStats.builder().from(aggregateData)
-                      .numDVs(estimator.get().estimateNumDistinctValues())
-                      .build();
-                }
-                adjustedStatsMap.put(pseudoPartName.toString(), aggregateData);
-                // reset everything
-                pseudoPartName = new StringBuilder();
-                pseudoIndexSum = 0;
-                length = 0;
-              }
-              aggregateData = null;
-            }
-            currIndex = indexMap.get(partName);
-            pseudoPartName.append(partName);
-            pseudoIndexSum += currIndex;
-            length++;
-            currIndex++;
-            if (aggregateData == null) {
-              aggregateData = StringColumnStats.copyOf(newData);
-            } else {
-              aggregateData = (StringColumnStats) aggregateData.merge(newData);
-            }
-          }
-          if (length > 0) {
-            adjustedIndexMap.put(pseudoPartName.toString(), pseudoIndexSum / length);
-            adjustedStatsMap.put(pseudoPartName.toString(), aggregateData);
-          }
-        }
-        stats = (StringColumnStats) myExtrapolate(partNames.size(), colStatsWithSourceInfo.size(),
-            adjustedIndexMap, adjustedStatsMap, -1);
-      }
-      LOG.debug("Ndv estimation for {} is {}, # of partitions requested: {}, # of partitions found: {}",
-          colName, stats.numDVs(), partNames.size(), colStatsWithSourceInfo.size());
-
-      ColumnStatisticsObj statsObj = ColumnStatsAggregatorFactory.newColumnStaticsObj(colName, colType);
-      statsObj.setStatistics(stats == null ? "" : StatisticsSerdeUtils.serializeStatistics(stats));
-      return statsObj;
-    } catch (JsonProcessingException e) {
-      throw new MetaException("Exception for statistics' serde: " + e.getMessage());
     }
+    LOG.debug("all of the bit vectors can merge for {} is {}", colName, areAllEstimatorsMergeable);
+    if (!doAllPartitionContainStats && colStatsWithSourceInfo.size() >= 2) {
+      LOG.debug("start extrapolation for {}", colName);
+
+      Map<String, Integer> indexMap = new HashMap<>();
+      for (int index = 0; index < partNames.size(); index++) {
+        indexMap.put(partNames.get(index), index);
+      }
+      Map<String, Double> adjustedIndexMap = new HashMap<>();
+      Map<String, ColumnStats> adjustedStatsMap = new HashMap<>();
+      if (!areAllEstimatorsMergeable) {
+        // if not every partition uses bitvector for ndv, we just fall back to the traditional extrapolation methods
+        for (ColStatsObjWithSourceInfo csp : colStatsWithSourceInfo) {
+          String partName = csp.getPartName();
+          adjustedIndexMap.put(partName, (double) indexMap.get(partName));
+          adjustedStatsMap.put(partName, csp.getStats());
+        }
+      } else {
+        // we first merge all the adjacent bitvectors that we could merge and derive new partition names and index
+        StringBuilder pseudoPartName = new StringBuilder();
+        double pseudoIndexSum = 0;
+        int length = 0;
+        int currIndex = -1;
+        StringColumnStats aggregateData = null;
+        for (ColStatsObjWithSourceInfo csp : colStatsWithSourceInfo) {
+          String partName = csp.getPartName();
+          StringColumnStats newData = csp.getStats();
+          // newData.isSetBitVectors() should be true for sure because we already checked it before
+          if (indexMap.get(partName) != currIndex) {
+            // There is bitvector, but it is not adjacent to the previous ones.
+            if (length > 0) {
+              // we have to set ndv
+              adjustedIndexMap.put(pseudoPartName.toString(), pseudoIndexSum / length);
+              Optional<NumDistinctValueEstimator> estimator = aggregateData.getNDVEstimator();
+              if (estimator.isPresent()) {
+                aggregateData = StringColumnStats.builder().from(aggregateData)
+                    .numDVs(estimator.get().estimateNumDistinctValues())
+                    .build();
+              }
+              adjustedStatsMap.put(pseudoPartName.toString(), aggregateData);
+              // reset everything
+              pseudoPartName = new StringBuilder();
+              pseudoIndexSum = 0;
+              length = 0;
+            }
+            aggregateData = null;
+          }
+          currIndex = indexMap.get(partName);
+          pseudoPartName.append(partName);
+          pseudoIndexSum += currIndex;
+          length++;
+          currIndex++;
+          if (aggregateData == null) {
+            aggregateData = StringColumnStats.copyOf(newData);
+          } else {
+            aggregateData = (StringColumnStats) aggregateData.merge(newData);
+          }
+        }
+        if (length > 0) {
+          adjustedIndexMap.put(pseudoPartName.toString(), pseudoIndexSum / length);
+          adjustedStatsMap.put(pseudoPartName.toString(), aggregateData);
+        }
+      }
+      stats = (StringColumnStats) myExtrapolate(partNames.size(), colStatsWithSourceInfo.size(),
+          adjustedIndexMap, adjustedStatsMap, -1);
+    }
+    LOG.debug("Ndv estimation for {} is {}, # of partitions requested: {}, # of partitions found: {}",
+        colName, stats.numDVs(), partNames.size(), colStatsWithSourceInfo.size());
+
+    ColumnStatisticsObj statsObj = ColumnStatsAggregatorFactory.newColumnStaticsObj(colName, colType);
+    statsObj.setStatistics(StatisticsSerdeUtils.serializeStatistics(stats));
+    return statsObj;
   }
 
   private ColumnStats myExtrapolate(int numParts, int numPartsWithStats, Map<String, Double> adjustedIndexMap,
-      Map<String, ColumnStats> adjustedStatsMap, double densityAvg) throws JsonProcessingException {
+      Map<String, ColumnStats> adjustedStatsMap, double densityAvg) {
 
     Map<String, StringColumnStats> extractedAdjustedStatsMap = new HashMap<>();
     for (Map.Entry<String, ColumnStats> entry : adjustedStatsMap.entrySet()) {

@@ -48,7 +48,6 @@ import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableListMultimap;
@@ -98,6 +97,8 @@ import org.apache.hadoop.hive.metastore.security.DBTokenStore;
 import org.apache.hadoop.hive.metastore.security.HadoopThriftAuthBridge;
 import org.apache.hadoop.hive.metastore.security.MemoryTokenStore;
 import org.apache.hadoop.hive.metastore.security.ZooKeeperTokenStore;
+import org.apache.hadoop.hive.metastore.stastistics.ColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.StatisticsSerdeUtils;
 import org.apache.hadoop.security.authorize.DefaultImpersonationProvider;
 import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.hadoop.util.MachineList;
@@ -1207,6 +1208,7 @@ public class MetaStoreServerUtils {
   // ColumnStatisticsObj with info about its db, table, partition (if table is partitioned)
   public static class ColStatsObjWithSourceInfo {
     private final ColumnStatisticsObj colStatsObj;
+    private ColumnStats stats = null;
     private final String catName;
     private final String dbName;
     private final String tblName;
@@ -1223,6 +1225,14 @@ public class MetaStoreServerUtils {
 
     public ColumnStatisticsObj getColStatsObj() {
       return colStatsObj;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T extends ColumnStats> T getStats() {
+      if (stats == null && colStatsObj.getStatistics() != null && !colStatsObj.getStatistics().isEmpty()) {
+        this.stats = StatisticsSerdeUtils.deserializeStatistics(colStatsObj.getColType(), colStatsObj.getStatistics());
+      }
+      return (T) stats;
     }
 
     public String getCatName() {
