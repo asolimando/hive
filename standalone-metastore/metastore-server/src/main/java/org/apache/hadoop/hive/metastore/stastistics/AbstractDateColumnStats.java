@@ -23,29 +23,37 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import org.apache.hadoop.hive.common.ndv.NumDistinctValueEstimator;
-import org.apache.hadoop.hive.common.ndv.NumDistinctValueEstimatorFactory;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData;
 import org.apache.hadoop.hive.metastore.api.Date;
 import org.apache.hadoop.hive.metastore.api.DateColumnStatsData;
-import org.apache.hadoop.hive.metastore.stastistics.DateColumnStats;
 import org.immutables.value.Value;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 @DefaultImmutableStyle
 @Value.Immutable
 @JsonDeserialize
 @JsonIgnoreProperties(ignoreUnknown = true)
-public abstract class AbstractDateColumnStats extends OrderingColumnStats {
+public abstract class AbstractDateColumnStats implements OrderingColumnStats<Long>, NDVColumnStats {
 
-  @JsonProperty("lowValue")
-  public abstract Optional<Long> lowValue();
+  @JsonIgnore
+  @Value.Auxiliary
+  public Optional<Date> lowDate() {
+    if (lowValue().isPresent()) {
+      return Optional.of(new Date(lowValue().get()));
+    }
+    return Optional.empty();
+  }
 
-  @JsonProperty("highValue")
-  public abstract Optional<Long> highValue();
+  @JsonIgnore
+  @Value.Auxiliary
+  public Optional<Date> highDate() {
+    if (highValue().isPresent()) {
+      return Optional.of(new Date(highValue().get()));
+    }
+    return Optional.empty();
+  }
 
   @JsonIgnore
   public ColumnStatisticsData getColumnStatsData() {
@@ -62,25 +70,28 @@ public abstract class AbstractDateColumnStats extends OrderingColumnStats {
   }
 
   @JsonIgnore
-  public AbstractColumnStats merge(AbstractColumnStats other) {
-    if (!(other instanceof DateColumnStats)) {
-      throw new IllegalArgumentException("Both objects must be of type " + DateColumnStats.class +
-          ", " + "found " + other.getClass());
-    }
+  public ColumnStats merge(ColumnStats other) {
+    checkType(DateColumnStats.class);
     DateColumnStats o = (DateColumnStats) other;
     DateColumnStats.Builder statsBuilder = DateColumnStats.builder();
 
-    statsBuilder.lowValue(mergeLowValues(this.lowValue(), o.lowValue(), Long::compareTo));
-    statsBuilder.highValue(mergeHighValues(this.highValue(), o.highValue(), Long::compareTo));
-    statsBuilder.numNulls(this.numNulls() + o.numNulls());
+    statsBuilder.lowValue(this.mergeLowValues(o));
+    statsBuilder.highValue(this.mergeHighValues(o));
+    statsBuilder.numNulls(this.mergeNumNulls(o));
 
-    Optional<NumDistinctValueEstimator> optEstimator = getMergedBitVector(this.bitVector(), o.bitVector());
+    Optional<NumDistinctValueEstimator> optEstimator = this.getMergedBitVector(o);
     if (optEstimator.isPresent()) {
       NumDistinctValueEstimator estimator = optEstimator.get();
-      statsBuilder.bitVector(estimator.serialize());
-      statsBuilder.numDVs(estimator.estimateNumDistinctValues());
+      byte[] mergedBitVector = estimator.serialize();
+      statsBuilder.bitVector(mergedBitVector);
+      if (Arrays.equals(this.bitVector(), mergedBitVector)) {
+        // in this case the bitvectors could not be merged, do not use it to update NDVs
+        statsBuilder.numDVs(this.mergeNDVs(o));
+      } else {
+        statsBuilder.numDVs(estimator.estimateNumDistinctValues());
+      }
     } else {
-      statsBuilder.numDVs(Math.max(this.numDVs(), o.numDVs()));
+      statsBuilder.numDVs(this.mergeNDVs(o));
     }
 
     return statsBuilder.build();

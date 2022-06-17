@@ -31,7 +31,7 @@ import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.columnstats.ColStatsBuilder;
-import org.apache.hadoop.hive.metastore.stastistics.AbstractColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.ColumnStats;
 import org.apache.hadoop.hive.metastore.stastistics.StatisticsSerdeUtils;
 import org.apache.hadoop.hive.metastore.stastistics.StringColumnStats;
 import org.apache.hadoop.hive.metastore.utils.MetaStoreServerUtils.ColStatsObjWithSourceInfo;
@@ -63,7 +63,7 @@ public class StringColumnStatsAggregatorTest {
   public void testAggregateSingleStat() throws MetaException, JsonProcessingException {
     List<String> partitionNames = Collections.singletonList("part1");
 
-    AbstractColumnStats stats = StringColumnStats.builder()
+    ColumnStats stats = StringColumnStats.builder()
         .numNulls(1)
         .numDVs(2)
         .avgColLen(8.5)
@@ -90,7 +90,7 @@ public class StringColumnStatsAggregatorTest {
   public void testAggregateMultiStatsWhenAllAvailable() throws MetaException, JsonProcessingException {
     List<String> partitionNames = Arrays.asList("part1", "part2", "part3");
 
-    AbstractColumnStats s1 = StringColumnStats.builder()
+    ColumnStats s1 = StringColumnStats.builder()
         .numNulls(1)
         .numDVs(3)
         .avgColLen(20.0 / 3)
@@ -102,7 +102,7 @@ public class StringColumnStatsAggregatorTest {
     ColumnStatistics stats1 = StatisticsTestUtils.createColStats(
         data1, StatisticsSerdeUtils.serializeStatistics(s1), TABLE, COL, partitionNames.get(0));
 
-    AbstractColumnStats s2 = StringColumnStats.builder()
+    ColumnStats s2 = StringColumnStats.builder()
         .numNulls(2)
         .numDVs(3)
         .avgColLen(14)
@@ -114,7 +114,7 @@ public class StringColumnStatsAggregatorTest {
     ColumnStatistics stats2 = StatisticsTestUtils.createColStats(
         data2, StatisticsSerdeUtils.serializeStatistics(s2), TABLE, COL, partitionNames.get(1));
 
-    AbstractColumnStats s3 = StringColumnStats.builder()
+    ColumnStats s3 = StringColumnStats.builder()
         .numNulls(3)
         .numDVs(2)
         .avgColLen(17.5)
@@ -147,7 +147,7 @@ public class StringColumnStatsAggregatorTest {
     List<String> partitionNames = Arrays.asList("part1", "part2", "part3");
 
     FMSketch fmSketch1 = StatisticsTestUtils.createFMSketch(S_1, S_2, S_3);
-    AbstractColumnStats s1 = StringColumnStats.builder()
+    ColumnStats s1 = StringColumnStats.builder()
         .numNulls(1)
         .numDVs(3)
         .avgColLen(20.0 / 3)
@@ -160,7 +160,7 @@ public class StringColumnStatsAggregatorTest {
     ColumnStatistics stats1 = StatisticsTestUtils.createColStats(
         data1, StatisticsSerdeUtils.serializeStatistics(s1), TABLE, COL, partitionNames.get(0));
 
-    AbstractColumnStats s2 = StringColumnStats.builder()
+    ColumnStats s2 = StringColumnStats.builder()
         .numNulls(2)
         .numDVs(3)
         .avgColLen(14)
@@ -172,7 +172,7 @@ public class StringColumnStatsAggregatorTest {
     ColumnStatistics stats2 = StatisticsTestUtils.createColStats(
         data2, StatisticsSerdeUtils.serializeStatistics(s2), TABLE, COL, partitionNames.get(1));
 
-    AbstractColumnStats s3 = StringColumnStats.builder()
+    ColumnStats s3 = StringColumnStats.builder()
         .numNulls(3)
         .numDVs(2)
         .avgColLen(17.5)
@@ -230,7 +230,7 @@ public class StringColumnStatsAggregatorTest {
   public void testAggregateMultiStatsWhenOnlySomeAvailable() throws MetaException, JsonProcessingException {
     List<String> partitionNames = Arrays.asList("part1", "part2", "part3", "part4");
 
-    AbstractColumnStats s1 = StringColumnStats.builder()
+    ColumnStats s1 = StringColumnStats.builder()
         .numNulls(1)
         .numDVs(3)
         .avgColLen(20.0 / 3)
@@ -242,7 +242,7 @@ public class StringColumnStatsAggregatorTest {
     ColumnStatistics stats1 = StatisticsTestUtils.createColStats(
         data1, StatisticsSerdeUtils.serializeStatistics(s1), TABLE, COL, partitionNames.get(0));
 
-    AbstractColumnStats s3 = StringColumnStats.builder()
+    ColumnStats s3 = StringColumnStats.builder()
         .numNulls(3)
         .numDVs(2)
         .avgColLen(17.5)
@@ -254,7 +254,7 @@ public class StringColumnStatsAggregatorTest {
     ColumnStatistics stats3 = StatisticsTestUtils.createColStats(
         data3, StatisticsSerdeUtils.serializeStatistics(s3), TABLE, COL, partitionNames.get(2));
 
-    AbstractColumnStats s4 = StringColumnStats.builder()
+    ColumnStats s4 = StringColumnStats.builder()
         .numNulls(2)
         .numDVs(3)
         .avgColLen(14)
@@ -285,7 +285,7 @@ public class StringColumnStatsAggregatorTest {
       throws MetaException, JsonProcessingException {
     List<String> partitionNames = Arrays.asList("part1", "part2", "part3");
 
-    AbstractColumnStats s1 = StringColumnStats.builder()
+    ColumnStats s1 = StringColumnStats.builder()
         .numNulls(1)
         .numDVs(3)
         .avgColLen(20.0 / 3)
@@ -297,7 +297,7 @@ public class StringColumnStatsAggregatorTest {
     ColumnStatistics stats1 = StatisticsTestUtils.createColStats(
         data1, StatisticsSerdeUtils.serializeStatistics(s1), TABLE, COL, partitionNames.get(0));
 
-    AbstractColumnStats s3 = StringColumnStats.builder()
+    ColumnStats s3 = StringColumnStats.builder()
         .numNulls(3)
         .numDVs(2)
         .avgColLen(17.5)

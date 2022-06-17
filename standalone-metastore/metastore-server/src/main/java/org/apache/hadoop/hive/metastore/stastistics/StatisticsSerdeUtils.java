@@ -30,8 +30,8 @@ public class StatisticsSerdeUtils {
   protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().registerModule(new Jdk8Module());
 
   // fully qualified class names to make the IDE happy
-  public static final ImmutableMap<String, Class<? extends AbstractColumnStats>> COL_TYPE_STATS_CLASS_MAP
-      = new ImmutableMap.Builder<String, Class<? extends AbstractColumnStats>>()
+  public static final ImmutableMap<String, Class<? extends ColumnStats>> COL_TYPE_STATS_CLASS_MAP
+      = new ImmutableMap.Builder<String, Class<? extends ColumnStats>>()
       .put("boolean", org.apache.hadoop.hive.metastore.stastistics.BooleanColumnStats.class)
       .put("string", org.apache.hadoop.hive.metastore.stastistics.StringColumnStats.class)
       .put("varchar", org.apache.hadoop.hive.metastore.stastistics.StringColumnStats.class)
@@ -52,7 +52,7 @@ public class StatisticsSerdeUtils {
     throw new AssertionException("StatisticsSerdeUtils util class should not be instantiated");
   }
 
-  public static String serializeStatistics(AbstractColumnStats stats) throws JsonProcessingException {
+  public static String serializeStatistics(ColumnStats stats) throws JsonProcessingException {
     return OBJECT_MAPPER.writeValueAsString(stats);
   }
 
@@ -61,17 +61,17 @@ public class StatisticsSerdeUtils {
   }
 
   @SuppressWarnings("unchecked")
-  public static <T extends AbstractColumnStats> T deserializeStatistics(
+  public static <T extends ColumnStats> T deserializeStatistics(
       String colType, String statistics) throws JsonProcessingException {
     return (T) deserializeStatistics(getStatsClassFromColumnType(colType), statistics);
   }
 
-  public static <T extends AbstractColumnStats> T deserializeStatistics(
+  public static <T extends ColumnStats> T deserializeStatistics(
       Class<T> clazz, String statistics) throws JsonProcessingException {
     return OBJECT_MAPPER.readValue(statistics, clazz);
   }
 
-  private static Class<? extends AbstractColumnStats> getStatsClassFromColumnType(String colType) {
+  private static Class<? extends ColumnStats> getStatsClassFromColumnType(String colType) {
     if (!COL_TYPE_STATS_CLASS_MAP.containsKey(colType)) {
       throw new IllegalArgumentException("Unknown column type " + colType);
     }

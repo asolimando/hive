@@ -25,14 +25,30 @@ import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData;
 @DefaultImmutableStyle
 @JsonDeserialize
 @SuppressWarnings("BS")
-public abstract class AbstractColumnStats {
+public interface ColumnStats {
+
+  @JsonIgnore
+  byte[] EMPTY_HLL = new byte[] {'H', 'L'};
 
   @JsonProperty("numNulls")
-  public abstract long numNulls();
+  long numNulls();
 
   @JsonIgnore
-  public abstract ColumnStatisticsData getColumnStatsData();
+  ColumnStatisticsData getColumnStatsData();
 
   @JsonIgnore
-  public abstract AbstractColumnStats merge(AbstractColumnStats o);
+  ColumnStats merge(ColumnStats o);
+
+  @JsonIgnore
+  default long mergeNumNulls(ColumnStats o) {
+    return this.numNulls() + o.numNulls();
+  }
+
+  @JsonIgnore
+  default void checkType(Class<? extends ColumnStats> clazz) {
+    if (!(this.getClass().isAssignableFrom(clazz))) {
+      throw new IllegalArgumentException("Both objects must be of type " + clazz +
+          ", " + "found " + this.getClass());
+    }
+  }
 }

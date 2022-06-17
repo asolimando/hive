@@ -19,12 +19,10 @@ package org.apache.hadoop.hive.metastore.stastistics;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.hadoop.hive.common.ndv.NumDistinctValueEstimator;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData;
 import org.apache.hadoop.hive.metastore.api.StringColumnStatsData;
-import org.apache.hadoop.hive.metastore.stastistics.StringColumnStats;
 import org.immutables.value.Value;
 
 import java.util.Arrays;
@@ -34,16 +32,8 @@ import java.util.Optional;
 @Value.Immutable
 @JsonDeserialize
 @JsonIgnoreProperties(ignoreUnknown = true)
-public abstract class AbstractStringColumnStats extends VariableLengthColumnStats {
-
-  @JsonProperty("numDVs")
-  public abstract long numDVs();
-
-  @Value.Default
-  @JsonProperty("bitVector")
-  public byte[] bitVector() {
-    return new byte[] {'H', 'L'};
-  }
+public abstract class AbstractStringColumnStats
+    implements VariableLengthColumnStats, OrderingColumnStats<String>, NDVColumnStats {
 
   @JsonIgnore
   public ColumnStatisticsData getColumnStatsData() {
@@ -59,31 +49,28 @@ public abstract class AbstractStringColumnStats extends VariableLengthColumnStat
   }
 
   @JsonIgnore
-  public AbstractColumnStats merge(AbstractColumnStats other) {
-    if (!(other instanceof StringColumnStats)) {
-      throw new IllegalArgumentException("Both objects must be of type " + StringColumnStats.class +
-          ", " + "found " + other.getClass());
-    }
+  public ColumnStats merge(ColumnStats other) {
+    checkType(StringColumnStats.class);
     StringColumnStats o = (StringColumnStats) other;
     StringColumnStats.Builder statsBuilder = StringColumnStats.builder();
 
-    statsBuilder.maxColLen(Math.max(this.maxColLen(), o.maxColLen()));
-    statsBuilder.avgColLen(Math.max(this.avgColLen(), o.avgColLen()));
-    statsBuilder.numNulls(this.numNulls() + o.numNulls());
+    statsBuilder.maxColLen(this.mergeMaxColLen(o));
+    statsBuilder.avgColLen(this.mergeAvgColLen(o));
+    statsBuilder.numNulls(this.mergeNumNulls(o));
 
-    Optional<NumDistinctValueEstimator> optEstimator = OrderingColumnStats.getMergedBitVector(this.bitVector(), o.bitVector());
+    Optional<NumDistinctValueEstimator> optEstimator = this.getMergedBitVector(o);
     if (optEstimator.isPresent()) {
       NumDistinctValueEstimator estimator = optEstimator.get();
       byte[] mergedBitVector = estimator.serialize();
       statsBuilder.bitVector(mergedBitVector);
       if (Arrays.equals(this.bitVector(), mergedBitVector)) {
         // in this case the bitvectors could not be merged, do not use it to update NDVs
-        statsBuilder.numDVs(Math.max(this.numDVs(), o.numDVs()));
+        statsBuilder.numDVs(this.mergeNDVs(o));
       } else {
         statsBuilder.numDVs(estimator.estimateNumDistinctValues());
       }
     } else {
-      statsBuilder.numDVs(Math.max(this.numDVs(), o.numDVs()));
+      statsBuilder.numDVs(this.mergeNDVs(o));
     }
 
     return statsBuilder.build();

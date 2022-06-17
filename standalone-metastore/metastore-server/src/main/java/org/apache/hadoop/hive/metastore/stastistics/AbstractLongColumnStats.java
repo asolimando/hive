@@ -19,30 +19,20 @@ package org.apache.hadoop.hive.metastore.stastistics;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSetter;
-import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.hadoop.hive.common.ndv.NumDistinctValueEstimator;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData;
-import org.apache.hadoop.hive.metastore.api.Date;
 import org.apache.hadoop.hive.metastore.api.LongColumnStatsData;
-import org.apache.hadoop.hive.metastore.stastistics.LongColumnStats;
 import org.immutables.value.Value;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 @DefaultImmutableStyle
 @Value.Immutable
 @JsonDeserialize
 @JsonIgnoreProperties(ignoreUnknown = true)
-public abstract class AbstractLongColumnStats extends OrderingColumnStats {
-
-  @JsonProperty("lowValue")
-  public abstract Optional<Long> lowValue();
-
-  @JsonProperty("highValue")
-  public abstract Optional<Long> highValue();
+public abstract class AbstractLongColumnStats implements OrderingColumnStats<Long> {
 
   @JsonIgnore
   public ColumnStatisticsData getColumnStatsData() {
@@ -58,26 +48,28 @@ public abstract class AbstractLongColumnStats extends OrderingColumnStats {
   }
 
   @JsonIgnore
-  public AbstractColumnStats merge(AbstractColumnStats other) {
-    if (!(other instanceof LongColumnStats)) {
-      throw new IllegalArgumentException("Both objects must be of type " + LongColumnStats.class +
-          ", " + "found " + other.getClass());
-    }
+  public ColumnStats merge(ColumnStats other) {
+    checkType(LongColumnStats.class);
     LongColumnStats o = (LongColumnStats) other;
     LongColumnStats.Builder statsBuilder = LongColumnStats.builder();
 
-    statsBuilder.lowValue(mergeLowValues(this.lowValue(), o.lowValue(), Long::compareTo));
-    statsBuilder.highValue(mergeHighValues(this.highValue(), o.highValue(), Long::compareTo));
+    statsBuilder.lowValue(this.mergeLowValues(o));
+    statsBuilder.highValue(this.mergeHighValues(o));
+    statsBuilder.numNulls(this.mergeNumNulls(o));
 
-    statsBuilder.numNulls(this.numNulls() + o.numNulls());
-
-    Optional<NumDistinctValueEstimator> optEstimator = getMergedBitVector(this.bitVector(), o.bitVector());
+    Optional<NumDistinctValueEstimator> optEstimator = this.getMergedBitVector(o);
     if (optEstimator.isPresent()) {
       NumDistinctValueEstimator estimator = optEstimator.get();
-      statsBuilder.bitVector(estimator.serialize());
-      statsBuilder.numDVs(estimator.estimateNumDistinctValues());
+      byte[] mergedBitVector = estimator.serialize();
+      statsBuilder.bitVector(mergedBitVector);
+      if (Arrays.equals(this.bitVector(), mergedBitVector)) {
+        // in this case the bitvectors could not be merged, do not use it to update NDVs
+        statsBuilder.numDVs(this.mergeNDVs(o));
+      } else {
+        statsBuilder.numDVs(estimator.estimateNumDistinctValues());
+      }
     } else {
-      statsBuilder.numDVs(Math.max(this.numDVs(), o.numDVs()));
+      statsBuilder.numDVs(this.mergeNDVs(o));
     }
 
     return statsBuilder.build();

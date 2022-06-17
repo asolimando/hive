@@ -19,80 +19,32 @@ package org.apache.hadoop.hive.metastore.stastistics;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.hadoop.hive.common.ndv.NumDistinctValueEstimator;
-import org.apache.hadoop.hive.common.ndv.NumDistinctValueEstimatorFactory;
-import org.apache.hadoop.hive.common.ndv.hll.HyperLogLog;
-import org.apache.hadoop.hive.common.ndv.hll.HyperLogLogUtils;
-import org.immutables.value.Value;
 
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
-public abstract class OrderingColumnStats extends AbstractColumnStats {
+public interface OrderingColumnStats<T extends Comparable<T>> extends ColumnStats, NDVColumnStats {
 
-  private static final byte[] EMPTY_HLL = new byte[] {'H', 'L'};
+  @JsonProperty("lowValue")
+  Optional<T> lowValue();
 
-  @JsonProperty("numDVs")
-  public abstract long numDVs();
+  @JsonProperty("highValue")
+  Optional<T> highValue();
 
-  @Value.Default
-  @JsonProperty("bitVector")
-  public byte[] bitVector() {
-    return EMPTY_HLL;
-  }
-
-  protected <T> Optional<T> mergeLowValues (Optional<T> low1, Optional<T> low2, Comparator<T> comparator) {
-    return Stream.of(low1, low2)
+  @JsonIgnore
+  default Optional<T> mergeLowValues (OrderingColumnStats<T> o) {
+    return Stream.of(lowValue(), o.lowValue())
         .filter(Optional::isPresent)
         .map(Optional::get)
-        .min(comparator);
-  }
-
-  protected <T> Optional<T> mergeHighValues(Optional<T> high1, Optional<T> high2, Comparator<T> comparator) {
-    return Stream.of(high1, high2)
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .max(comparator);
+        .min(T::compareTo);
   }
 
   @JsonIgnore
-  protected long mergeNDVs(OrderingColumnStats o) {
-    return Math.max(this.numDVs(), o.numDVs());
-  }
-
-  @JsonIgnore
-  public static Optional<NumDistinctValueEstimator> getNDVEstimator(byte[] bv) {
-    if (bv != null && !Arrays.equals(bv, EMPTY_HLL)) {
-      return Optional.of(NumDistinctValueEstimatorFactory.getNumDistinctValueEstimator(bv));
-    }
-    return Optional.empty();
-  }
-
-  @JsonIgnore
-  public static Optional<NumDistinctValueEstimator> getMergedBitVector(byte[] bv1, byte[] bv2) {
-    Optional<NumDistinctValueEstimator> oldEstOptional = getNDVEstimator(bv1);
-    Optional<NumDistinctValueEstimator> newEstOptional = getNDVEstimator(bv2);
-
-    if (oldEstOptional.isPresent() && newEstOptional.isPresent()) {
-      final long ndv;
-      NumDistinctValueEstimator oldEst = oldEstOptional.get();
-      NumDistinctValueEstimator newEst = newEstOptional.get();
-      if (oldEst.canMerge(newEst)) {
-        NumDistinctValueEstimator mergedEst = NumDistinctValueEstimatorFactory.getEmptyNumDistinctValueEstimator(oldEst);
-        mergedEst.mergeEstimators(oldEst);
-        mergedEst.mergeEstimators(newEst);
-        return Optional.of(mergedEst);
-      }
-      // if they can't be merged, the current behaviour is to keep the first estimator
-      return Optional.of(oldEst);
-    }
-
-    return Stream.of(oldEstOptional, newEstOptional)
+  default Optional<T> mergeHighValues(OrderingColumnStats<T> o) {
+    return Stream.of(highValue(), o.highValue())
         .filter(Optional::isPresent)
         .map(Optional::get)
-        .findFirst();
+        .max(T::compareTo);
   }
 }

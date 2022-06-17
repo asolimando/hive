@@ -22,14 +22,13 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.hadoop.hive.metastore.api.BinaryColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData;
-import org.apache.hadoop.hive.metastore.stastistics.BinaryColumnStats;
 import org.immutables.value.Value;
 
 @DefaultImmutableStyle
 @Value.Immutable
 @JsonDeserialize
 @JsonIgnoreProperties(ignoreUnknown = true)
-public abstract class AbstractBinaryColumnStats extends VariableLengthColumnStats {
+public abstract class AbstractBinaryColumnStats implements VariableLengthColumnStats {
 
   @JsonIgnore
   public ColumnStatisticsData getColumnStatsData() {
@@ -43,16 +42,13 @@ public abstract class AbstractBinaryColumnStats extends VariableLengthColumnStat
   }
 
   @JsonIgnore
-  public AbstractColumnStats merge(AbstractColumnStats other) {
-    if (!(other instanceof BinaryColumnStats)) {
-      throw new IllegalArgumentException("Both objects must be of type " + BinaryColumnStats.class +
-          ", " + "found " + other.getClass());
-    }
+  public ColumnStats merge(ColumnStats other) {
+    checkType(BinaryColumnStats.class);
     BinaryColumnStats o = (BinaryColumnStats) other;
-    BinaryColumnStats.Builder statsBuilder = BinaryColumnStats.builder();
-    statsBuilder.maxColLen(Math.max(this.maxColLen(), o.maxColLen()));
-    statsBuilder.avgColLen(Math.max(this.avgColLen(), o.avgColLen()));
-    statsBuilder.numNulls(this.numNulls() + o.numNulls());
-    return statsBuilder.build();
+    return BinaryColumnStats.builder()
+        .maxColLen(this.mergeMaxColLen(o))
+        .avgColLen(this.mergeAvgColLen(o))
+        .numNulls(this.mergeNumNulls(o))
+        .build();
   }
 }

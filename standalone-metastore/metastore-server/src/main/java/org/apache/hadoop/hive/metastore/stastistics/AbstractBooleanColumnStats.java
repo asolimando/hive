@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.hadoop.hive.metastore.api.BooleanColumnStatsData;
-import org.apache.hadoop.hive.metastore.stastistics.BooleanColumnStats;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData;
 import org.immutables.value.Value;
 
@@ -30,7 +29,7 @@ import org.immutables.value.Value;
 @Value.Immutable
 @JsonDeserialize
 @JsonIgnoreProperties(ignoreUnknown = true)
-public abstract class AbstractBooleanColumnStats extends AbstractColumnStats {
+public abstract class AbstractBooleanColumnStats implements ColumnStats {
 
   @JsonProperty("numTrues")
   public abstract long numTrues();
@@ -50,16 +49,14 @@ public abstract class AbstractBooleanColumnStats extends AbstractColumnStats {
   }
 
   @JsonIgnore
-  public AbstractColumnStats merge(AbstractColumnStats other) {
-    if (!(other instanceof BooleanColumnStats)) {
-      throw new IllegalArgumentException("Both objects must be of type " + BooleanColumnStats.class +
-          ", " + "found " + other.getClass());
-    }
+  @Override
+  public ColumnStats merge(ColumnStats other) {
+    checkType(BooleanColumnStats.class);
     BooleanColumnStats o = (BooleanColumnStats) other;
-    BooleanColumnStats.Builder statsBuilder = BooleanColumnStats.builder();
-    statsBuilder.numTrues(this.numTrues() + o.numTrues());
-    statsBuilder.numFalses(this.numFalses() + o.numFalses());
-    statsBuilder.numNulls(this.numNulls() + o.numNulls());
-    return statsBuilder.build();
+    return BooleanColumnStats.builder()
+        .numTrues(this.numTrues() + o.numTrues())
+        .numFalses(this.numFalses() + o.numFalses())
+        .numNulls(this.mergeNumNulls(o))
+        .build();
   }
 }

@@ -263,7 +263,7 @@ public class StatObjectConverter {
         return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
       } else if (statsObj.getStatsData().isSetBinaryStats()) {
         BinaryColumnStatsData binaryStats = statsObj.getStatsData().getBinaryStats();
-        StringColumnStats.Builder statsBuilder = StringColumnStats.builder();
+        BinaryColumnStats.Builder statsBuilder = BinaryColumnStats.builder();
         if (binaryStats.isSetNumNulls()) {
           statsBuilder.numNulls(binaryStats.getNumNulls());
         }
@@ -295,7 +295,7 @@ public class StatObjectConverter {
         return StatisticsSerdeUtils.serializeStatistics(statsBuilder.build());
       } else if (statsObj.getStatsData().isSetTimestampStats()) {
         TimestampColumnStatsData timestampStats = statsObj.getStatsData().getTimestampStats();
-        DateColumnStats.Builder statsBuilder = DateColumnStats.builder();
+        TimestampColumnStats.Builder statsBuilder = TimestampColumnStats.builder();
         if (timestampStats.isSetNumNulls()) {
           statsBuilder.numNulls(timestampStats.getNumNulls());
         }
@@ -382,10 +382,10 @@ public class StatObjectConverter {
       } else if (colType.equals("binary")) {
         statistics = StatisticsSerdeUtils.serializeStatistics(
             BinaryColumnStats.builder()
-            .numNulls((Long) numNulls)
-            .maxColLen((Long) maxColLen)
-            .avgColLen((Double) avgColLen)
-            .build());
+                .numNulls((Long) numNulls)
+                .maxColLen((Long) maxColLen)
+                .avgColLen((Double) avgColLen)
+                .build());
       } else if (colType.equals("bigint") || colType.equals("int") || colType.equals("smallint") || colType.equals("tinyint")) {
         statistics = StatisticsSerdeUtils.serializeStatistics(
             LongColumnStats.builder()

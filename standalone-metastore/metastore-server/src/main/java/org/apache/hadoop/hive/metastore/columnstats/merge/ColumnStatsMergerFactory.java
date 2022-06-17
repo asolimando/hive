@@ -37,7 +37,7 @@ import org.apache.hadoop.hive.metastore.columnstats.cache.StringColumnStatsDataI
 import org.apache.hadoop.hive.metastore.columnstats.cache.TimestampColumnStatsDataInspector;
 
 import com.google.common.base.Preconditions;
-import org.apache.hadoop.hive.metastore.stastistics.AbstractColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.ColumnStats;
 import org.apache.hadoop.hive.metastore.stastistics.StatisticsSerdeUtils;
 
 public class ColumnStatsMergerFactory {
@@ -67,9 +67,9 @@ public class ColumnStatsMergerFactory {
         "The column types must match: [" + typeNew + "::" + typeOld + "]");
 
     try {
-      AbstractColumnStats newStats = StatisticsSerdeUtils.deserializeStatistics(
+      ColumnStats newStats = StatisticsSerdeUtils.deserializeStatistics(
           typeNew, StatObjectConverter.getStatisticsString(statsObjNew));
-      AbstractColumnStats oldStats = StatisticsSerdeUtils.deserializeStatistics(
+      ColumnStats oldStats = StatisticsSerdeUtils.deserializeStatistics(
           typeNew, StatObjectConverter.getStatisticsString(statsObjOld));
 
       return new ColumnStatisticsObj(statsObjNew.getColName(), statsObjNew.getColType(),

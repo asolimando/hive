@@ -17,13 +17,24 @@
  */
 package org.apache.hadoop.hive.metastore.stastistics;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public abstract class VariableLengthColumnStats extends AbstractColumnStats {
+public interface VariableLengthColumnStats extends ColumnStats {
 
   @JsonProperty("avgColLen")
-  public abstract double avgColLen();
+  double avgColLen();
 
   @JsonProperty("maxColLen")
-  public abstract long maxColLen();
+  long maxColLen();
+
+  @JsonIgnore
+  default double mergeAvgColLen(VariableLengthColumnStats o) {
+    return Math.max(this.avgColLen(), o.avgColLen());
+  }
+
+  @JsonIgnore
+  default long mergeMaxColLen(VariableLengthColumnStats o) {
+    return Math.max(this.maxColLen(), o.maxColLen());
+  }
 }

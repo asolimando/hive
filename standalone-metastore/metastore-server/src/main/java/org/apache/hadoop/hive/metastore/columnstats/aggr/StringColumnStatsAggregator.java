@@ -35,7 +35,7 @@ import org.apache.hadoop.hive.metastore.api.ColumnStatisticsObj;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.StringColumnStatsData;
 import org.apache.hadoop.hive.metastore.columnstats.cache.StringColumnStatsDataInspector;
-import org.apache.hadoop.hive.metastore.stastistics.AbstractColumnStats;
+import org.apache.hadoop.hive.metastore.stastistics.ColumnStats;
 import org.apache.hadoop.hive.metastore.stastistics.OrderingColumnStats;
 import org.apache.hadoop.hive.metastore.stastistics.StatisticsSerdeUtils;
 import org.apache.hadoop.hive.metastore.stastistics.StringColumnStats;
@@ -82,7 +82,7 @@ public class StringColumnStatsAggregator extends ColumnStatsAggregator implement
           indexMap.put(partNames.get(index), index);
         }
         Map<String, Double> adjustedIndexMap = new HashMap<>();
-        Map<String, AbstractColumnStats> adjustedStatsMap = new HashMap<>();
+        Map<String, ColumnStats> adjustedStatsMap = new HashMap<>();
         if (!areAllEstimatorsMergeable) {
           // if not every partition uses bitvector for ndv, we just fall back to the traditional extrapolation methods
           for (ColStatsObjWithSourceInfo csp : colStatsWithSourceInfo) {
@@ -108,7 +108,7 @@ public class StringColumnStatsAggregator extends ColumnStatsAggregator implement
               if (length > 0) {
                 // we have to set ndv
                 adjustedIndexMap.put(pseudoPartName.toString(), pseudoIndexSum / length);
-                Optional<NumDistinctValueEstimator> estimator = OrderingColumnStats.getNDVEstimator(aggregateData.bitVector());
+                Optional<NumDistinctValueEstimator> estimator = aggregateData.getNDVEstimator();
                 if (estimator.isPresent()) {
                   aggregateData = StringColumnStats.builder().from(aggregateData)
                       .numDVs(estimator.get().estimateNumDistinctValues())
@@ -152,11 +152,11 @@ public class StringColumnStatsAggregator extends ColumnStatsAggregator implement
     }
   }
 
-  private AbstractColumnStats myExtrapolate(int numParts, int numPartsWithStats, Map<String, Double> adjustedIndexMap,
-      Map<String, AbstractColumnStats> adjustedStatsMap, double densityAvg) throws JsonProcessingException {
+  private ColumnStats myExtrapolate(int numParts, int numPartsWithStats, Map<String, Double> adjustedIndexMap,
+      Map<String, ColumnStats> adjustedStatsMap, double densityAvg) throws JsonProcessingException {
 
     Map<String, StringColumnStats> extractedAdjustedStatsMap = new HashMap<>();
-    for (Map.Entry<String, AbstractColumnStats> entry : adjustedStatsMap.entrySet()) {
+    for (Map.Entry<String, ColumnStats> entry : adjustedStatsMap.entrySet()) {
       extractedAdjustedStatsMap.put(entry.getKey(), (StringColumnStats) entry.getValue());
     }
     List<Map.Entry<String, StringColumnStats>> list = new LinkedList<>(extractedAdjustedStatsMap.entrySet());

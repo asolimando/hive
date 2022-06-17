@@ -19,7 +19,6 @@ package org.apache.hadoop.hive.metastore.stastistics;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.hadoop.hive.common.ndv.NumDistinctValueEstimator;
@@ -27,22 +26,34 @@ import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData;
 import org.apache.hadoop.hive.metastore.api.Decimal;
 import org.apache.hadoop.hive.metastore.api.DecimalColumnStatsData;
 import org.apache.hadoop.hive.metastore.api.utils.DecimalUtils;
-import org.apache.hadoop.hive.metastore.stastistics.DecimalColumnStats;
 import org.immutables.value.Value;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 @DefaultImmutableStyle
 @Value.Immutable
 @JsonDeserialize
 @JsonIgnoreProperties(ignoreUnknown = true)
-public abstract class AbstractDecimalColumnStats extends OrderingColumnStats {
+public abstract class AbstractDecimalColumnStats implements OrderingColumnStats<String> {
 
-  @JsonProperty("lowValue")
-  public abstract Optional<String> lowValue();
+  @JsonIgnore
+  @Value.Auxiliary
+  public Optional<Decimal> lowDecimal() {
+    if (lowValue().isPresent()) {
+      return Optional.of(DecimalUtils.createThriftDecimal((lowValue().get())));
+    }
+    return Optional.empty();
+  }
 
-  @JsonProperty("highValue")
-  public abstract Optional<String> highValue();
+  @JsonIgnore
+  @Value.Auxiliary
+  public Optional<Decimal> highDecimal() {
+    if (highValue().isPresent()) {
+      return Optional.of(DecimalUtils.createThriftDecimal((highValue().get())));
+    }
+    return Optional.empty();
+  }
 
   @JsonIgnore
   public ColumnStatisticsData getColumnStatsData() {
@@ -58,35 +69,40 @@ public abstract class AbstractDecimalColumnStats extends OrderingColumnStats {
   }
 
   @JsonIgnore
-  public AbstractColumnStats merge(AbstractColumnStats other) {
-    if (!(other instanceof DecimalColumnStats)) {
-      throw new IllegalArgumentException("Both objects must be of type " + DecimalColumnStats.class +
-          ", " + "found " + other.getClass());
-    }
+  public ColumnStats merge(ColumnStats other) {
+    checkType(DecimalColumnStats.class);
     DecimalColumnStats o = (DecimalColumnStats) other;
     DecimalColumnStats.Builder statsBuilder = DecimalColumnStats.builder();
 
-    if (!this.lowValue().isPresent() && !o.lowValue().isPresent()) {
-      Decimal d1 = DecimalUtils.createThriftDecimal(this.lowValue().get());
-      Decimal d2 = DecimalUtils.createThriftDecimal(o.lowValue().get());
-      statsBuilder.lowValue(ObjectUtils.min(d1, d2).toString());
+    Decimal low1 = this.lowValue().isPresent() ? DecimalUtils.createThriftDecimal(this.lowValue().get()) : null;
+    Decimal low2 = o.lowValue().isPresent() ? DecimalUtils.createThriftDecimal(o.lowValue().get()) : null;
+    Decimal newLow = ObjectUtils.min(low1, low2);
+    if (newLow != null) {
+      statsBuilder.lowValue(DecimalUtils.createJdoDecimalString(newLow));
     }
 
-    if (!this.highValue().isPresent() && !o.highValue().isPresent()) {
-      Decimal d1 = DecimalUtils.createThriftDecimal(this.highValue().get());
-      Decimal d2 = DecimalUtils.createThriftDecimal(o.highValue().get());
-      statsBuilder.lowValue(ObjectUtils.max(d1, d2).toString());
+    Decimal high1 = this.highValue().isPresent() ? DecimalUtils.createThriftDecimal(this.highValue().get()) : null;
+    Decimal high2 = o.highValue().isPresent() ? DecimalUtils.createThriftDecimal(o.highValue().get()) : null;
+    Decimal newHigh = ObjectUtils.max(high1, high2);
+    if (newHigh != null) {
+      statsBuilder.highValue(DecimalUtils.createJdoDecimalString(newHigh));
     }
 
-    statsBuilder.numNulls(this.numNulls() + o.numNulls());
+    statsBuilder.numNulls(this.mergeNumNulls(o));
 
-    Optional<NumDistinctValueEstimator> optEstimator = getMergedBitVector(this.bitVector(), o.bitVector());
+    Optional<NumDistinctValueEstimator> optEstimator = this.getMergedBitVector(o);
     if (optEstimator.isPresent()) {
       NumDistinctValueEstimator estimator = optEstimator.get();
-      statsBuilder.bitVector(estimator.serialize());
-      statsBuilder.numDVs(estimator.estimateNumDistinctValues());
+      byte[] mergedBitVector = estimator.serialize();
+      statsBuilder.bitVector(mergedBitVector);
+      if (Arrays.equals(this.bitVector(), mergedBitVector)) {
+        // in this case the bitvectors could not be merged, do not use it to update NDVs
+        statsBuilder.numDVs(this.mergeNDVs(o));
+      } else {
+        statsBuilder.numDVs(estimator.estimateNumDistinctValues());
+      }
     } else {
-      statsBuilder.numDVs(Math.max(this.numDVs(), o.numDVs()));
+      statsBuilder.numDVs(this.mergeNDVs(o));
     }
 
     return statsBuilder.build();
